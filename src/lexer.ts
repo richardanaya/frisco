@@ -12,7 +12,7 @@ export enum TokenType {
   ASSIGN = 'ASSIGN',           // =
   SEMANTIC_MATCH = 'SEMANTIC_MATCH', // ~==
   IMPLIES = 'IMPLIES',         // :-
-  QUERY = 'QUERY',            // ?-
+  QUERY = 'QUERY',            // ?
   DOT = 'DOT',                // .
   COMMA = 'COMMA',            // ,
   COLON = 'COLON',            // :
@@ -115,8 +115,8 @@ export class Lexer {
 
   private getKeywordOrIdentifier(text: string): TokenType {
     const keywords: { [key: string]: TokenType } = {
-      'Concept': TokenType.CONCEPT,
-      'Entity': TokenType.ENTITY,
+      'concept': TokenType.CONCEPT,
+      'entity': TokenType.ENTITY,
       'description': TokenType.DESCRIPTION,
       'attributes': TokenType.ATTRIBUTES,
       'essentials': TokenType.ESSENTIALS,
@@ -182,16 +182,10 @@ export class Lexer {
         continue;
       }
 
-      if (char === '?' && this.peek(1) === '-') {
-        this.advance();
-        this.advance();
-        tokens.push({ type: TokenType.QUERY, value: '?-', line, column });
-        continue;
-      }
-
       // Single character tokens
       const singleChar: { [key: string]: TokenType } = {
         '=': TokenType.ASSIGN,
+        '?': TokenType.QUERY,
         '.': TokenType.DOT,
         ',': TokenType.COMMA,
         ':': TokenType.COLON,

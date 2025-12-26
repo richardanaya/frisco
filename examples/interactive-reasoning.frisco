@@ -1,0 +1,34 @@
+# Interactive reasoning with I/O
+
+concept Man.
+  description = "rational animal"
+  attributes = ["mortal being", "finite lifespan"]
+  essentials = ["rational_faculty", "volitional_consciousness"]
+
+entity SOCRATES: Man.
+  description = "ancient Greek philosopher"
+
+entity PLATO: Man.
+  description = "student of Socrates"
+
+# Rule that announces its reasoning
+mortal(person) :-
+  println("Analyzing:", person),
+  print("  Checking if", person, "is a philosopher..."),
+  person.description ~== "philosopher",
+  println("Yes!"),
+  print("  Checking if Man has finite lifespan..."),
+  Man.attributes ~== "will die eventually",
+  println("Yes!"),
+  println("Conclusion:", person, "is mortal.").
+
+# Test reasoning with output
+? println("=== Starting Philosophical Reasoning ===").
+? nl().
+
+? mortal(SOCRATES).
+
+? nl().
+? println("---").
+
+? mortal(PLATO).

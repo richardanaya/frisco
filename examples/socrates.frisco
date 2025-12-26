@@ -1,4 +1,4 @@
-Concept Man.
+concept Man.
   description = "rational animal"
   attributes = [
     "finite lifespan",
@@ -11,13 +11,13 @@ Concept Man.
     "capacity for conceptual knowledge"
   ]
 
-Concept Mortal.
+concept Mortal.
   description = "subject to inevitable death"
   essentials = [
     "finite_lifespan"
   ]
 
-Entity SOCRATES: Man.
+entity SOCRATES: Man.
   description = "Socrates"
 
 # Premises leveraging multi-line clarity and flexibility
@@ -34,4 +34,4 @@ mortal(target) :-
   Man.attributes ~== "will eventually die".
 
 # Query derives the necessary conclusion mechanically
-?- mortal(SOCRATES).
+? mortal(SOCRATES).

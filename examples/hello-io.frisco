@@ -1,0 +1,30 @@
+# Example demonstrating I/O built-in predicates
+
+concept Greeting.
+  description = "friendly salutation"
+
+entity WORLD: Greeting.
+  description = "the world"
+
+# Rule that prints a greeting
+greet(name) :-
+  println("Hello,", name, "!"),
+  println("Welcome to Frisco!").
+
+# Rule that shows computation and prints result
+is_mortal(x) :-
+  println("Checking if", x, "is mortal..."),
+  x.description ~== "living being",
+  println("Yes,", x, "is mortal!").
+
+# Test the greeting
+? greet(WORLD).
+
+# Test with semantic matching
+concept Human.
+  attributes = ["mortal", "rational"]
+
+entity ALICE: Human.
+  description = "a person"
+
+? is_mortal(ALICE).

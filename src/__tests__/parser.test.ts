@@ -4,7 +4,7 @@ import { Parser } from '../parser.js';
 describe('Parser', () => {
   test('parses concept declaration', () => {
     const source = `
-      Concept Man.
+      concept Man.
         description = "rational animal"
         attributes = ["finite lifespan"]
         essentials = ["rational_faculty"]
@@ -25,7 +25,7 @@ describe('Parser', () => {
 
   test('parses entity declaration', () => {
     const source = `
-      Entity SOCRATES: Man.
+      entity SOCRATES: Man.
         description = "Socrates"
     `;
     const lexer = new Lexer(source);
@@ -79,7 +79,7 @@ describe('Parser', () => {
   });
 
   test('parses query', () => {
-    const source = '?- mortal(SOCRATES).';
+    const source = '? mortal(SOCRATES).';
     const lexer = new Lexer(source);
     const tokens = lexer.tokenize();
     const parser = new Parser(tokens);
@@ -94,15 +94,15 @@ describe('Parser', () => {
 
   test('parses complete program', () => {
     const source = `
-      Concept Man.
+      concept Man.
         description = "rational animal"
 
-      Entity SOCRATES: Man.
+      entity SOCRATES: Man.
         description = "Socrates"
 
       mortal(x) :- Man.attributes ~== "finite".
 
-      ?- mortal(SOCRATES).
+      ? mortal(SOCRATES).
     `;
     const lexer = new Lexer(source);
     const tokens = lexer.tokenize();

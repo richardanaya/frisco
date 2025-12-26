@@ -64,6 +64,12 @@ export class Executor {
     predicate: AST.PredicateCall,
     bindings: Bindings
   ): Promise<boolean> {
+    // Check for built-in predicates first
+    const builtinResult = await this.evaluateBuiltinPredicate(predicate, bindings);
+    if (builtinResult !== null) {
+      return builtinResult;
+    }
+
     // Try to match against each rule
     for (const rule of this.kb.rules) {
       if (rule.head.name === predicate.name) {
@@ -97,6 +103,51 @@ export class Executor {
     }
 
     return false;
+  }
+
+  private async evaluateBuiltinPredicate(
+    predicate: AST.PredicateCall,
+    bindings: Bindings
+  ): Promise<boolean | null> {
+    switch (predicate.name) {
+      case 'print':
+        if (predicate.arguments.length >= 1) {
+          const values = predicate.arguments.map(arg => this.resolveValue(arg, bindings));
+          process.stdout.write(values.join(' '));
+          return true;
+        }
+        return false;
+
+      case 'println':
+        if (predicate.arguments.length >= 1) {
+          const values = predicate.arguments.map(arg => this.resolveValue(arg, bindings));
+          console.log(values.join(' '));
+          return true;
+        }
+        return false;
+
+      case 'nl':
+        // Newline (no arguments)
+        if (predicate.arguments.length === 0) {
+          console.log();
+          return true;
+        }
+        return false;
+
+      default:
+        // Not a built-in predicate
+        return null;
+    }
+  }
+
+  private resolveValue(arg: string, bindings: Bindings): string {
+    // If it's a variable that's bound, return the bound value
+    const resolved = bindings.get(arg);
+    if (resolved !== undefined) {
+      return resolved;
+    }
+    // Otherwise return the argument as-is (could be a literal value)
+    return arg;
   }
 
   private async evaluateConditions(

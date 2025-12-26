@@ -225,7 +225,7 @@ export class Parser {
     };
   }
 
-  // ?- mortal(SOCRATES).
+  // ? mortal(SOCRATES).
   private parseQuery(): AST.Query {
     this.expect(TokenType.QUERY);
     const predicate = this.parsePredicateCall();

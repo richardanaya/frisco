@@ -11,13 +11,13 @@ Frisco is a logic programming language combining Prolog-style inference with Obj
 ### Keywords
 - `Concept` - Declares an abstract concept
 - `Entity` - Declares a concrete instance
-- `description`, `attributes`, `essentials` - Concept properties
+- `description`, `attributes`, `essentials` - concept properties
 
 ### Operators
 - `=` - Assignment
 - `~==` - Semantic match (embedding-based similarity ≥ 0.7)
 - `:-` - Logical implication (rule definition)
-- `?-` - Query operator
+- `?` - Query operator
 - `.` - Field access / statement terminator
 - `,` - Conjunction (AND)
 
@@ -34,10 +34,10 @@ Frisco is a logic programming language combining Prolog-style inference with Obj
 
 ## Syntax
 
-### Concept Declaration
+### concept Declaration
 
 ```frisco
-Concept <Name>.
+concept <Name>.
   description = "<text>"
   attributes = [<string-list>]
   essentials = [<identifier-list>]
@@ -45,22 +45,22 @@ Concept <Name>.
 
 **Example:**
 ```frisco
-Concept Dog.
+concept Dog.
   description = "domesticated canine"
   attributes = ["four legs", "furry", "loyal"]
   essentials = ["mammal", "carnivore"]
 ```
 
-### Entity Declaration
+### entity Declaration
 
 ```frisco
-Entity <NAME>: <ConceptType>.
+entity <NAME>: <ConceptType>.
   description = "<text>"
 ```
 
 **Example:**
 ```frisco
-Entity FIDO: Dog.
+entity FIDO: Dog.
   description = "golden retriever"
 ```
 
@@ -78,12 +78,65 @@ pet(x) :- x.description ~== "friendly animal".
 ### Query
 
 ```frisco
-?- <predicate>(<arguments>).
+? <predicate>(<arguments>).
 ```
 
 **Example:**
 ```frisco
-?- pet(FIDO).
+? pet(FIDO).
+```
+
+## Built-in Predicates
+
+Frisco provides built-in predicates for I/O and other side effects.
+
+### I/O Predicates
+
+#### `print(...)`
+Print one or more values without a newline. Automatically resolves variables.
+
+```frisco
+? print("Hello").           # Prints: Hello
+? print("The answer is:", 42).  # Prints: The answer is: 42
+
+# In rules:
+greet(name) :- print("Hello, ", name).
+? greet(WORLD).             # Prints: Hello, WORLD
+```
+
+#### `println(...)`
+Print one or more values with a newline.
+
+```frisco
+? println("Hello, World!").     # Prints: Hello, World! (with newline)
+? println("Name:", person).     # Prints: Name: <value> (with newline)
+
+# Multiple arguments separated by spaces:
+? println("The", "quick", "fox").  # Prints: The quick fox
+```
+
+#### `nl()`
+Print a blank line.
+
+```frisco
+? nl().                     # Prints a newline
+```
+
+### Using I/O in Rules
+
+Built-in predicates can be used in rule bodies for debugging or interactive reasoning:
+
+```frisco
+mortal(person) :-
+  println("Checking:", person),
+  person.description ~== "human being",
+  println("Confirmed:", person, "is mortal").
+
+? mortal(SOCRATES).
+# Output:
+# Checking: SOCRATES
+# Confirmed: SOCRATES is mortal
+# True
 ```
 
 ## Semantic Matching
@@ -123,98 +176,98 @@ target.essentials        # Access via variable (must be bound)
 ### Example 1: Simple Classification
 
 ```frisco
-Concept Bird.
+concept Bird.
   attributes = ["wings", "feathers", "flies"]
 
-Entity SPARROW: Bird.
+entity SPARROW: Bird.
   description = "small bird"
 
 can_fly(x) :- Bird.attributes ~== "able to fly".
 
-?- can_fly(SPARROW).
+? can_fly(SPARROW).
 # Output: True
 ```
 
 ### Example 2: Multiple Conditions
 
 ```frisco
-Concept Mammal.
+concept Mammal.
   attributes = ["warm-blooded", "hair"]
 
-Concept Carnivore.
+concept Carnivore.
   essentials = ["eats_meat"]
 
-Entity LION: Mammal.
+entity LION: Mammal.
   description = "large cat"
 
 predator(x) :-
   x.description ~== "large feline",
   Carnivore.essentials ~== "meat eater".
 
-?- predator(LION).
+? predator(LION).
 # Output: True
 ```
 
 ### Example 3: Philosophical Reasoning
 
 ```frisco
-Concept Man.
+concept Man.
   description = "rational animal"
   essentials = ["reason", "free_will"]
 
-Concept Mortal.
+concept Mortal.
   attributes = ["finite lifespan"]
 
-Entity ARISTOTLE: Man.
+entity ARISTOTLE: Man.
   description = "Greek philosopher"
 
 mortal(x) :-
   Man.essentials ~== "rational faculty",
   x.description ~== "philosopher".
 
-?- mortal(ARISTOTLE).
+? mortal(ARISTOTLE).
 # Output: True
 ```
 
 ### Example 4: Transitive Properties
 
 ```frisco
-Concept Vehicle.
+concept Vehicle.
   attributes = ["transport", "wheels"]
 
-Concept Car.
+concept Car.
   essentials = ["motor", "four_wheels"]
 
-Entity TOYOTA: Car.
+entity TOYOTA: Car.
   description = "sedan"
 
 needs_fuel(x) :-
   x.description ~== "automobile",
   Car.essentials ~== "engine".
 
-?- needs_fuel(TOYOTA).
+? needs_fuel(TOYOTA).
 # Output: True
 ```
 
 ### Example 5: Negative Case
 
 ```frisco
-Concept Plant.
+concept Plant.
   attributes = ["photosynthesis", "roots"]
 
-Entity ROSE: Plant.
+entity ROSE: Plant.
   description = "flowering plant"
 
 can_run(x) :- x.description ~== "animal with legs".
 
-?- can_run(ROSE).
+? can_run(ROSE).
 # Output: False
 ```
 
 ### Example 6: Array Matching
 
 ```frisco
-Concept Language.
+concept Language.
   attributes = [
     "human communication",
     "symbolic system",
@@ -224,26 +277,26 @@ Concept Language.
 structured(x) :-
   Language.attributes ~== "organized system with rules".
 
-?- structured(Language).
+? structured(Language).
 # Output: True (matches "grammar rules")
 ```
 
 ### Example 7: Variable Binding
 
 ```frisco
-Concept Shape.
+concept Shape.
   essentials = ["geometry"]
 
-Entity CIRCLE: Shape.
+entity CIRCLE: Shape.
   description = "round shape"
 
-Entity SQUARE: Shape.
+entity SQUARE: Shape.
   description = "four-sided shape"
 
 has_sides(x) :- x.description ~== "polygon".
 
-?- has_sides(CIRCLE).  # False
-?- has_sides(SQUARE).  # True
+? has_sides(CIRCLE).  # False
+? has_sides(SQUARE).  # True
 ```
 
 ---
@@ -257,15 +310,15 @@ A hands-on introduction to Frisco programming, inspired by Tour of Go.
 Let's start with the simplest Frisco program:
 
 ```frisco
-Concept Greeting.
+concept Greeting.
   description = "hello message"
 
-Entity HELLO: Greeting.
+entity HELLO: Greeting.
   description = "Hello, World"
 
 is_greeting(x) :- x.description ~== "salutation".
 
-?- is_greeting(HELLO).
+? is_greeting(HELLO).
 ```
 
 **What happens:**
@@ -280,7 +333,7 @@ is_greeting(x) :- x.description ~== "salutation".
 Concepts are abstract ideas with three properties:
 
 ```frisco
-Concept Animal.
+concept Animal.
   description = "living organism"
   attributes = ["breathes", "moves", "eats"]
   essentials = ["biological", "alive"]
@@ -295,10 +348,10 @@ Concept Animal.
 Entities are concrete instances of concepts:
 
 ```frisco
-Concept Cat.
+concept Cat.
   attributes = ["whiskers", "purrs", "claws"]
 
-Entity FLUFFY: Cat.
+entity FLUFFY: Cat.
   description = "tabby cat"
 ```
 
@@ -319,7 +372,7 @@ The `~==` operator is Frisco's superpower:
 Arrays match if ANY element is similar:
 
 ```frisco
-Concept Fruit.
+concept Fruit.
   attributes = ["apple", "banana", "orange"]
 
 # This matches "banana" in the array
@@ -331,11 +384,11 @@ Fruit.attributes ~== "tropical fruit"  # True
 Use `.` to access properties:
 
 ```frisco
-Concept Person.
+concept Person.
   description = "human being"
   essentials = ["consciousness"]
 
-Entity ALICE: Person.
+entity ALICE: Person.
   description = "software engineer"
 
 # Access concept fields
@@ -358,7 +411,7 @@ predicate(parameter) :- condition.
 Example:
 
 ```frisco
-Concept Tree.
+concept Tree.
   attributes = ["trunk", "leaves", "roots"]
 
 alive(x) :- Tree.attributes ~== "living organism parts".
@@ -369,10 +422,10 @@ alive(x) :- Tree.attributes ~== "living organism parts".
 Combine conditions with `,` (AND):
 
 ```frisco
-Concept Mammal.
+concept Mammal.
   attributes = ["warm-blooded", "milk"]
 
-Concept Pet.
+concept Pet.
   attributes = ["domesticated", "friendly"]
 
 good_pet(x) :-
@@ -388,16 +441,16 @@ All conditions must be true for the rule to succeed.
 Variables bind to values during query evaluation:
 
 ```frisco
-Entity DOG: Animal.
+entity DOG: Animal.
   description = "loyal companion"
 
-Entity ROCK: Mineral.
+entity ROCK: Mineral.
   description = "hard stone"
 
 living(thing) :- thing.description ~== "alive".
 
-?- living(DOG).   # True, thing=DOG
-?- living(ROCK).  # False
+? living(DOG).   # True, thing=DOG
+? living(ROCK).  # False
 ```
 
 The variable `thing` gets bound to `DOG` or `ROCK`.
@@ -407,7 +460,7 @@ The variable `thing` gets bound to `DOG` or `ROCK`.
 Queries ask questions:
 
 ```frisco
-?- predicate(argument).
+? predicate(argument).
 ```
 
 Output is either `True` or `False`, with variable bindings:
@@ -415,7 +468,7 @@ Output is either `True` or `False`, with variable bindings:
 ```frisco
 mortal(x) :- Man.attributes ~== "finite".
 
-?- mortal(SOCRATES).
+? mortal(SOCRATES).
 # Output:
 # True
 # Bindings:
@@ -427,27 +480,27 @@ mortal(x) :- Man.attributes ~== "finite".
 Let's build a knowledge base about shapes:
 
 ```frisco
-Concept Shape.
+concept Shape.
   description = "geometric form"
 
-Concept Circle.
+concept Circle.
   attributes = ["round", "no corners", "curved"]
   essentials = ["continuous_curve"]
 
-Concept Square.
+concept Square.
   attributes = ["four sides", "four corners", "equal sides"]
   essentials = ["quadrilateral", "right_angles"]
 
-Entity WHEEL: Circle.
+entity WHEEL: Circle.
   description = "circular object"
 
-Entity BOX: Square.
+entity BOX: Square.
   description = "cubic container"
 
 has_corners(x) :- x.description ~== "angular shape".
 
-?- has_corners(WHEEL).  # False
-?- has_corners(BOX).    # True
+? has_corners(WHEEL).  # False
+? has_corners(BOX).    # True
 ```
 
 ## 11. Reasoning Example
@@ -455,34 +508,96 @@ has_corners(x) :- x.description ~== "angular shape".
 Classic syllogism in Frisco:
 
 ```frisco
-Concept Man.
+concept Man.
   attributes = [
     "mortal being",
     "finite lifespan",
     "rational faculty"
   ]
 
-Entity SOCRATES: Man.
+entity SOCRATES: Man.
   description = "Socrates"
 
 mortal(person) :-
   person.description ~== "human",
   Man.attributes ~== "will die".
 
-?- mortal(SOCRATES).
+? mortal(SOCRATES).
 # True - Socrates is mortal
 ```
 
-## 12. Philosophical Concepts
+## 12. Input/Output
+
+Frisco has built-in predicates for printing to the terminal:
+
+### Printing
+
+```frisco
+# Print without newline
+? print("Hello").
+# Output: HelloTrue
+
+# Print with newline
+? println("Hello, World!").
+# Output: Hello, World!
+#         True
+
+# Print multiple values
+? println("The answer is:", 42).
+# Output: The answer is: 42
+#         True
+
+# Blank line
+? nl().
+# Output: (blank line)
+#         True
+```
+
+### I/O in Rules
+
+Use I/O to trace reasoning:
+
+```frisco
+concept Man.
+  attributes = ["mortal", "rational"]
+
+entity ARISTOTLE: Man.
+  description = "philosopher"
+
+check_mortal(person) :-
+  println("Analyzing:", person),
+  print("  Is philosopher? "),
+  person.description ~== "thinker",
+  println("Yes!"),
+  print("  Has mortality? "),
+  Man.attributes ~== "will die",
+  println("Yes!"),
+  println("Conclusion:", person, "is mortal").
+
+? check_mortal(ARISTOTLE).
+# Output:
+# Analyzing: ARISTOTLE
+#   Is philosopher? Yes!
+#   Has mortality? Yes!
+# Conclusion: ARISTOTLE is mortal
+# True
+```
+
+This is incredibly useful for:
+- **Debugging**: See which rules fire
+- **Interactive reasoning**: Show logical steps
+- **User feedback**: Explain conclusions
+
+## 13. Philosophical Concepts
 
 Frisco shines with abstract reasoning:
 
 ```frisco
-Concept Justice.
+concept Justice.
   description = "moral rightness"
   essentials = ["fairness", "rights", "law"]
 
-Concept Action.
+concept Action.
   attributes = ["voluntary", "deliberate"]
 
 just_action(x) :-
@@ -490,75 +605,75 @@ just_action(x) :-
   Justice.essentials ~== "respects individual rights",
   x.description ~== "moral choice".
 
-Entity HONESTY: Action.
+entity HONESTY: Action.
   description = "truthful behavior"
 
-?- just_action(HONESTY).
+? just_action(HONESTY).
 # True
 ```
 
-## 13. Scientific Classification
+## 14. Scientific Classification
 
 Taxonomies work naturally:
 
 ```frisco
-Concept Kingdom.
+concept Kingdom.
   description = "highest biological rank"
 
-Concept Phylum.
+concept Phylum.
   essentials = ["body_plan"]
 
-Concept Mammal.
+concept Mammal.
   attributes = ["hair", "mammary glands", "warm-blooded"]
   essentials = ["vertebrate", "live_birth"]
 
-Concept Primate.
+concept Primate.
   attributes = ["opposable thumbs", "large brain"]
 
-Entity HUMAN: Primate.
+entity HUMAN: Primate.
   description = "homo sapiens"
 
 intelligent(x) :-
   Primate.attributes ~== "advanced cognition",
   x.description ~== "reasoning being".
 
-?- intelligent(HUMAN).
+? intelligent(HUMAN).
 # True
 ```
 
-## 14. Multiple Queries
+## 15. Multiple Queries
 
 Run several queries in one program:
 
 ```frisco
-Concept Bird.
+concept Bird.
   attributes = ["wings", "feathers", "beak"]
 
-Entity PENGUIN: Bird.
+entity PENGUIN: Bird.
   description = "flightless bird"
 
-Entity EAGLE: Bird.
+entity EAGLE: Bird.
   description = "soaring raptor"
 
 can_fly(x) :- x.description ~== "flying animal".
 
-?- can_fly(EAGLE).    # True
-?- can_fly(PENGUIN).  # False
+? can_fly(EAGLE).    # True
+? can_fly(PENGUIN).  # False
 ```
 
-## 15. Complex Reasoning
+## 16. Complex Reasoning
 
 Combine everything:
 
 ```frisco
-Concept Virtue.
+concept Virtue.
   description = "moral excellence"
   essentials = ["good_character"]
 
-Concept Rationality.
+concept Rationality.
   attributes = ["logical thinking", "reason"]
 
-Concept Courage.
+concept Courage.
   essentials = ["facing_fear", "acting_rightly"]
 
 virtuous_action(act) :-
@@ -567,31 +682,31 @@ virtuous_action(act) :-
   Rationality.attributes ~== "reasoned choice",
   Virtue.essentials ~== "excellence of character".
 
-Entity RESCUE: Courage.
+entity RESCUE: Courage.
   description = "saving someone from danger"
 
-?- virtuous_action(RESCUE).
+? virtuous_action(RESCUE).
 # True
 ```
 
-## 16. Practical Tips
+## 17. Practical Tips
 
 **Tip 1**: Descriptions should be concise but meaningful
 
 ```frisco
 # Good
-Entity CAR: Vehicle.
+entity CAR: Vehicle.
   description = "automobile"
 
 # Better for matching
-Entity CAR: Vehicle.
+entity CAR: Vehicle.
   description = "motorized road vehicle"
 ```
 
 **Tip 2**: Use arrays for multiple related attributes
 
 ```frisco
-Concept Fish.
+concept Fish.
   attributes = [
     "aquatic",
     "gills",
@@ -603,7 +718,7 @@ Concept Fish.
 **Tip 3**: Essentials define what something IS
 
 ```frisco
-Concept Triangle.
+concept Triangle.
   essentials = ["three_sides", "three_angles"]
   # These MUST be true for something to be a triangle
 ```
@@ -615,7 +730,7 @@ Concept Triangle.
 test_match(x) :- x.description ~== "your test phrase".
 ```
 
-## 17. Common Patterns
+## 18. Common Patterns
 
 **Pattern 1: Type Checking**
 
@@ -640,7 +755,7 @@ classify(x, category) :-
   x.description ~== "matching description".
 ```
 
-## 18. Next Steps
+## 19. Next Steps
 
 Now you know Frisco! To continue:
 
@@ -652,24 +767,24 @@ Now you know Frisco! To continue:
 Example project: Build a taxonomy of programming languages!
 
 ```frisco
-Concept Language.
+concept Language.
   essentials = ["syntax", "semantics"]
 
-Concept Functional.
+concept Functional.
   attributes = [
     "first-class functions",
     "immutability",
     "recursion"
   ]
 
-Entity LISP: Functional.
+entity LISP: Functional.
   description = "parenthesized prefix notation"
 
 expressive(x) :-
   Functional.attributes ~== "powerful abstraction",
   x.description ~== "homoiconic language".
 
-?- expressive(LISP).
+? expressive(LISP).
 ```
 
 **Happy reasoning! 🎉**

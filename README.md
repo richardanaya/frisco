@@ -22,19 +22,19 @@
 Frisco is a **logic programming language** that enables precise reasoning about concepts and relationships using semantic similarity. It combines Prolog-style inference with Objectivist epistemology and modern embedding vectors to create a system where philosophical arguments, scientific classifications, and logical proofs can be computed mechanically.
 
 ```frisco
-Concept Man.
+concept Man.
   description = "rational animal"
   attributes = ["finite lifespan", "biological organism"]
   essentials = ["rational_faculty", "volitional_consciousness"]
 
-Entity SOCRATES: Man.
+entity SOCRATES: Man.
   description = "Socrates"
 
 mortal(x) :-
   x.description ~== "philosopher from Athens",
   Man.attributes ~== "will eventually die".
 
-?- mortal(SOCRATES).
+? mortal(SOCRATES).
 # True
 ```
 
@@ -62,7 +62,7 @@ In Frisco:
 - **Descriptions** provide the conceptual integration
 
 ```frisco
-Concept Triangle.
+concept Triangle.
   description = "three-sided polygon"
   essentials = ["three_sides", "three_angles"]  # What makes it a triangle
   attributes = ["closed_shape", "plane_figure"]  # Observable properties
@@ -116,19 +116,56 @@ npm install
 npm run build
 ```
 
+### Interactive REPL
+
+Start the interactive reasoner:
+```bash
+npm run repl
+# or just:
+npm run dev
+```
+
+Try it out:
+```frisco
+frisco> ? println("Hello, World!").
+  Hello, World!
+  True
+
+frisco> concept Man. description = "rational animal"
+  (no output)
+
+frisco> entity SOCRATES: Man. description = "philosopher"
+  (no output)
+
+frisco> ? println(SOCRATES).
+  SOCRATES
+  True
+
+frisco> :help
+  (shows help)
+
+frisco> :quit
+```
+
+The REPL features:
+- 🎨 **Syntax highlighting** - Color-coded Frisco syntax
+- 📜 **History** - See all your past interactions
+- 💾 **Persistent knowledge base** - Concepts and entities stay loaded
+- 🔧 **Built-in commands** - `:help`, `:kb`, `:clear`, `:quit`
+
 ### Run Your First Program
 
 Create `hello.frisco`:
 ```frisco
-Concept Greeting.
+concept Greeting.
   description = "friendly salutation"
 
-Entity HELLO: Greeting.
+entity HELLO: Greeting.
   description = "Hello, World!"
 
 friendly(x) :- x.description ~== "warm welcome".
 
-?- friendly(HELLO).
+? friendly(HELLO).
 ```
 
 Run it:
@@ -146,7 +183,7 @@ npm run dev hello.frisco
 Abstract ideas with three properties:
 
 ```frisco
-Concept Animal.
+concept Animal.
   description = "living organism"          # What it means
   attributes = ["breathes", "moves"]       # Observable traits
   essentials = ["biological", "alive"]     # Defining characteristics
@@ -157,7 +194,7 @@ Concept Animal.
 Concrete instances of concepts:
 
 ```frisco
-Entity FIDO: Dog.
+entity FIDO: Dog.
   description = "golden retriever"
 ```
 
@@ -176,7 +213,7 @@ pet(x) :-
 Ask questions:
 
 ```frisco
-?- pet(FIDO).
+? pet(FIDO).
 ```
 
 ### Semantic Matching
@@ -255,7 +292,7 @@ npm test
 
 ### Philosophy
 ```frisco
-Concept Virtue.
+concept Virtue.
   essentials = ["moral_excellence", "good_character"]
 
 virtuous(x) :- x.description ~== "morally praiseworthy act".
@@ -263,10 +300,10 @@ virtuous(x) :- x.description ~== "morally praiseworthy act".
 
 ### Science
 ```frisco
-Concept Mammal.
+concept Mammal.
   attributes = ["warm-blooded", "hair", "milk"]
 
-Entity WHALE: Mammal.
+entity WHALE: Mammal.
   description = "aquatic mammal"
 ```
 

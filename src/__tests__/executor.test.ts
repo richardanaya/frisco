@@ -5,7 +5,7 @@ import { Executor } from '../executor.js';
 describe('Executor', () => {
   test('stores concepts in knowledge base', async () => {
     const source = `
-      Concept Man.
+      concept Man.
         description = "rational animal"
         attributes = ["finite"]
     `;
@@ -23,8 +23,8 @@ describe('Executor', () => {
 
   test('stores entities in knowledge base', async () => {
     const source = `
-      Concept Man.
-      Entity SOCRATES: Man.
+      concept Man.
+      entity SOCRATES: Man.
         description = "Socrates"
     `;
     const lexer = new Lexer(source);
@@ -58,17 +58,17 @@ describe('Executor', () => {
   // Skip semantic matching tests in Jest due to ONNX runtime compatibility
   test.skip('evaluates query with semantic matching', async () => {
     const source = `
-      Concept Man.
+      concept Man.
         attributes = ["mortal being", "finite existence"]
 
-      Entity SOCRATES: Man.
+      entity SOCRATES: Man.
         description = "ancient philosopher"
 
       mortal(target) :-
         target.description ~== "philosopher",
         Man.attributes ~== "will die eventually".
 
-      ?- mortal(SOCRATES).
+      ? mortal(SOCRATES).
     `;
 
     const originalLog = console.log;
@@ -91,15 +91,15 @@ describe('Executor', () => {
   // Skip semantic matching tests in Jest due to ONNX runtime compatibility
   test.skip('handles field access for entities', async () => {
     const source = `
-      Concept Person.
+      concept Person.
         essentials = ["consciousness"]
 
-      Entity JOHN: Person.
+      entity JOHN: Person.
         description = "a person"
 
       thinking(x) :- x.description ~== "human being".
 
-      ?- thinking(JOHN).
+      ? thinking(JOHN).
     `;
 
     const originalLog = console.log;

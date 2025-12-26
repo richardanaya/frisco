@@ -2,7 +2,7 @@ import { Lexer, TokenType } from '../lexer.js';
 
 describe('Lexer', () => {
   test('tokenizes concept declaration', () => {
-    const source = 'Concept Man.';
+    const source = 'concept Man.';
     const lexer = new Lexer(source);
     const tokens = lexer.tokenize();
 
@@ -49,7 +49,7 @@ describe('Lexer', () => {
   });
 
   test('tokenizes query', () => {
-    const source = '?- mortal(SOCRATES).';
+    const source = '? mortal(SOCRATES).';
     const lexer = new Lexer(source);
     const tokens = lexer.tokenize();
 
@@ -62,7 +62,7 @@ describe('Lexer', () => {
   });
 
   test('skips comments', () => {
-    const source = '# This is a comment\nConcept Man.';
+    const source = '# This is a comment\nconcept Man.';
     const lexer = new Lexer(source);
     const tokens = lexer.tokenize();
 

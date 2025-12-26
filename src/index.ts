@@ -37,11 +37,13 @@ export async function run(source: string): Promise<void> {
 // CLI entry point
 if (import.meta.url === `file://${process.argv[1]}`) {
   const args = process.argv.slice(2);
+
   if (args.length === 0) {
     console.error('Usage: frisco <file.frisco>');
     process.exit(1);
   }
 
+  // Run file
   const filePath = path.resolve(args[0]);
   runFile(filePath);
 }
