@@ -1,0 +1,37 @@
+Concept Man.
+  description = "rational animal"
+  attributes = [
+    "finite lifespan",
+    "biological organism with limited duration",
+    "vulnerable to physical cessation"
+  ]
+  essentials = [
+    "rational_faculty",
+    "volitional_consciousness",
+    "capacity for conceptual knowledge"
+  ]
+
+Concept Mortal.
+  description = "subject to inevitable death"
+  essentials = [
+    "finite_lifespan"
+  ]
+
+Entity SOCRATES: Man.
+  description = "Socrates"
+
+# Premises leveraging multi-line clarity and flexibility
+all_men_mortal :-
+  Man.attributes ~== "limited existence due to biology".
+
+socrates_is_man :-
+  SOCRATES.description ~== "ancient Greek thinker who pursued truth".
+
+# Derivation with flexible, clear matching
+mortal(target) :-
+  target.description ~== "philosopher from Athens",
+  Man.essentials ~== "ability to reason abstractly",
+  Man.attributes ~== "will eventually die".
+
+# Query derives the necessary conclusion mechanically
+?- mortal(SOCRATES).
