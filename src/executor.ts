@@ -12,6 +12,7 @@ interface KnowledgeBase {
 }
 
 export type OutputHandler = (message: string) => void;
+export type InputHandler = (prompt?: string) => Promise<string>;
 
 export class Executor {
   private kb: KnowledgeBase = {
@@ -21,10 +22,32 @@ export class Executor {
   };
   private matcher: SemanticMatcher;
   private outputHandler: OutputHandler;
+  private inputHandler: InputHandler;
 
-  constructor(threshold: number = 0.7, outputHandler?: OutputHandler) {
+  constructor(
+    threshold: number = 0.7,
+    outputHandler?: OutputHandler,
+    inputHandler?: InputHandler
+  ) {
     this.matcher = new SemanticMatcher(threshold);
     this.outputHandler = outputHandler || ((msg) => console.log(msg));
+    this.inputHandler = inputHandler || this.defaultInputHandler;
+  }
+
+  private async defaultInputHandler(prompt?: string): Promise<string> {
+    // Default input handler for file mode (uses readline)
+    const readline = await import('readline');
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+
+    return new Promise((resolve) => {
+      rl.question(prompt || '', (answer) => {
+        rl.close();
+        resolve(answer);
+      });
+    });
   }
 
   async execute(program: AST.Program): Promise<void> {
@@ -136,6 +159,16 @@ export class Executor {
         // Newline (no arguments)
         if (predicate.arguments.length === 0) {
           this.outputHandler('');
+          return true;
+        }
+        return false;
+
+      case 'read_line':
+        // read_line(Variable) - reads a line of input and binds it to Variable
+        if (predicate.arguments.length === 1) {
+          const varName = predicate.arguments[0];
+          const input = await this.inputHandler('');
+          bindings.set(varName, input);
           return true;
         }
         return false;

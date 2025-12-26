@@ -4,7 +4,7 @@ import * as AST from './ast.js';
 
 export class Serializer {
   static serializeConcept(concept: AST.ConceptDeclaration): string {
-    let output = `concept ${concept.name}.\n`;
+    let output = `concept ${concept.name}\n`;
 
     if (concept.description) {
       output += `  description = "${concept.description}"\n`;
@@ -32,7 +32,7 @@ export class Serializer {
   }
 
   static serializeEntity(entity: AST.EntityDeclaration): string {
-    let output = `entity ${entity.name}: ${entity.conceptType}.\n`;
+    let output = `entity ${entity.name}: ${entity.conceptType}\n`;
 
     if (entity.description) {
       output += `  description = "${entity.description}"\n`;

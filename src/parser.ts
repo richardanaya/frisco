@@ -59,14 +59,21 @@ export class Parser {
     }
   }
 
-  // Concept Man.
+  // Concept Man
   //   description = "rational animal"
   //   attributes = [...]
   //   essentials = [...]
   private parseConceptDeclaration(): AST.ConceptDeclaration {
     this.expect(TokenType.CONCEPT);
     const name = this.expect(TokenType.CONSTANT).value;
-    this.expect(TokenType.DOT);
+    // Period is optional - skip if present
+    if (this.check(TokenType.DOT)) {
+      this.advance();
+    }
+    // Skip optional newlines
+    while (this.check(TokenType.NEWLINE)) {
+      this.advance();
+    }
 
     let description: string | null = null;
     let attributes: string[] = [];
@@ -109,7 +116,14 @@ export class Parser {
     const name = this.expect(TokenType.CONSTANT).value;
     this.expect(TokenType.COLON);
     const conceptType = this.expect(TokenType.CONSTANT).value;
-    this.expect(TokenType.DOT);
+    // Period is optional - skip if present
+    if (this.check(TokenType.DOT)) {
+      this.advance();
+    }
+    // Skip optional newlines
+    while (this.check(TokenType.NEWLINE)) {
+      this.advance();
+    }
 
     let description: string | null = null;
 

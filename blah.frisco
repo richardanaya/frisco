@@ -1,0 +1,9 @@
+# Frisco Knowledge Base
+# Generated on 2025-12-26T23:17:03.860Z
+
+# concepts
+concept Foo
+
+concept Blah
+  description = "Hey"
+
