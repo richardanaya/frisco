@@ -1,6 +1,6 @@
 <div align="center">
 
-![Frisco](Frisco.jpeg)
+![Frisco](frisco.jpeg)
 
 # Frisco Programming Language
 
