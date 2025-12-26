@@ -5,6 +5,7 @@ import * as path from 'path';
 import { Lexer } from './lexer.js';
 import { Parser } from './parser.js';
 import { Executor } from './executor.js';
+import { startRepl } from './repl.js';
 
 export async function runFile(filePath: string): Promise<void> {
   const source = fs.readFileSync(filePath, 'utf-8');
@@ -39,11 +40,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const args = process.argv.slice(2);
 
   if (args.length === 0) {
-    console.error('Usage: frisco <file.frisco>');
-    process.exit(1);
+    // No file specified - start REPL
+    startRepl();
+  } else {
+    // Run file
+    const filePath = path.resolve(args[0]);
+    runFile(filePath);
   }
-
-  // Run file
-  const filePath = path.resolve(args[0]);
-  runFile(filePath);
 }

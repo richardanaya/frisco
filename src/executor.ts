@@ -11,6 +11,8 @@ interface KnowledgeBase {
   rules: AST.RuleDeclaration[];
 }
 
+export type OutputHandler = (message: string) => void;
+
 export class Executor {
   private kb: KnowledgeBase = {
     concepts: new Map(),
@@ -18,9 +20,11 @@ export class Executor {
     rules: [],
   };
   private matcher: SemanticMatcher;
+  private outputHandler: OutputHandler;
 
-  constructor(threshold: number = 0.7) {
+  constructor(threshold: number = 0.7, outputHandler?: OutputHandler) {
     this.matcher = new SemanticMatcher(threshold);
+    this.outputHandler = outputHandler || ((msg) => console.log(msg));
   }
 
   async execute(program: AST.Program): Promise<void> {
@@ -48,15 +52,15 @@ export class Executor {
     const result = await this.evaluatePredicate(query.predicate, bindings);
 
     if (result) {
-      console.log('True');
+      this.outputHandler('True');
       if (bindings.size > 0) {
-        console.log('Bindings:');
+        this.outputHandler('Bindings:');
         for (const [key, value] of bindings) {
-          console.log(`  ${key} = ${value}`);
+          this.outputHandler(`  ${key} = ${value}`);
         }
       }
     } else {
-      console.log('False');
+      this.outputHandler('False');
     }
   }
 
@@ -113,7 +117,9 @@ export class Executor {
       case 'print':
         if (predicate.arguments.length >= 1) {
           const values = predicate.arguments.map(arg => this.resolveValue(arg, bindings));
-          process.stdout.write(values.join(' '));
+          // Use outputHandler but without newline (print vs println)
+          // For REPL mode, we'll treat print same as println since we can't do inline output
+          this.outputHandler(values.join(' '));
           return true;
         }
         return false;
@@ -121,7 +127,7 @@ export class Executor {
       case 'println':
         if (predicate.arguments.length >= 1) {
           const values = predicate.arguments.map(arg => this.resolveValue(arg, bindings));
-          console.log(values.join(' '));
+          this.outputHandler(values.join(' '));
           return true;
         }
         return false;
@@ -129,7 +135,7 @@ export class Executor {
       case 'nl':
         // Newline (no arguments)
         if (predicate.arguments.length === 0) {
-          console.log();
+          this.outputHandler('');
           return true;
         }
         return false;
