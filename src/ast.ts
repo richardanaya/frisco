@@ -9,15 +9,18 @@ export type Statement =
   | ConceptDeclaration
   | EntityDeclaration
   | RuleDeclaration
-  | Query;
+  | Query
+  | Assignment;
 
 // Concept Man.
 //   description = "rational animal"
 //   attributes = [...]
 //   essentials = [...]
+// Or: Concept Man: Animal (with genus/parent concept)
 export type ConceptDeclaration = {
   type: 'ConceptDeclaration';
   name: string;
+  genus: string | null;  // Parent concept
   description: string | null;
   attributes: string[];
   essentials: string[];
@@ -70,10 +73,17 @@ export type PredicateCall = {
   arguments: Argument[];
 };
 
-export type Argument = string; // Variable or entity name
+export type Argument = string | FieldAccess; // Variable, entity name, or field access
 
 // ?- mortal(SOCRATES).
 export type Query = {
   type: 'Query';
   predicate: PredicateCall;
+};
+
+// X = "value"
+export type Assignment = {
+  type: 'Assignment';
+  variable: string;
+  value: string;
 };

@@ -1,0 +1,27 @@
+# Example: Using Variables in Frisco
+
+# Simple variable assignments
+Name = "Socrates"
+Title = "philosopher"
+
+? println(Name).
+? println(Title).
+
+# Variables can be used in multiple queries
+Greeting = "Hello"
+
+? print(Greeting).
+? print(", ").
+? print(Name).
+? println("!").
+
+# Variables work with concepts and entities
+concept Philosopher
+  description = "lover of wisdom"
+
+entity PLATO: Philosopher
+  description = "student of Socrates"
+
+Teacher = "SOCRATES"
+
+? println(Teacher).

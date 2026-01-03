@@ -4,7 +4,13 @@ import * as AST from './ast.js';
 
 export class Serializer {
   static serializeConcept(concept: AST.ConceptDeclaration): string {
-    let output = `concept ${concept.name}\n`;
+    let output = `concept ${concept.name}`;
+
+    if (concept.genus) {
+      output += `: ${concept.genus}`;
+    }
+
+    output += '\n';
 
     if (concept.description) {
       output += `  description = "${concept.description}"\n`;

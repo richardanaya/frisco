@@ -51,8 +51,14 @@ export class Parser {
       return this.parseEntityDeclaration();
     } else if (this.check(TokenType.QUERY)) {
       return this.parseQuery();
-    } else if (this.check(TokenType.IDENTIFIER)) {
-      return this.parseRuleDeclaration();
+    } else if (this.check(TokenType.IDENTIFIER) || this.check(TokenType.CONSTANT)) {
+      // Look ahead to distinguish between assignment and rule
+      const ahead = this.peek(1);
+      if (ahead.type === TokenType.ASSIGN) {
+        return this.parseAssignment();
+      } else {
+        return this.parseRuleDeclaration();
+      }
     } else {
       const token = this.peek();
       throw new Error(`Unexpected token ${token.type} at line ${token.line}, column ${token.column}`);
@@ -63,9 +69,18 @@ export class Parser {
   //   description = "rational animal"
   //   attributes = [...]
   //   essentials = [...]
+  // Or: Concept Man: Animal (with parent concept)
   private parseConceptDeclaration(): AST.ConceptDeclaration {
     this.expect(TokenType.CONCEPT);
     const name = this.expect(TokenType.CONSTANT).value;
+
+    // Check for parent concept (genus)
+    let genus: string | null = null;
+    if (this.check(TokenType.COLON)) {
+      this.advance();
+      genus = this.expect(TokenType.CONSTANT).value;
+    }
+
     // Period is optional - skip if present
     if (this.check(TokenType.DOT)) {
       this.advance();
@@ -103,6 +118,7 @@ export class Parser {
     return {
       type: 'ConceptDeclaration',
       name,
+      genus,
       description,
       attributes,
       essentials,
@@ -172,11 +188,14 @@ export class Parser {
       this.advance();
 
       if (!this.check(TokenType.RPAREN)) {
-        parameters.push(this.expect(TokenType.IDENTIFIER).value);
+        // Parameters can be either IDENTIFIER or CONSTANT (for variables like X)
+        const first = this.advance();
+        parameters.push(first.value);
 
         while (this.check(TokenType.COMMA)) {
           this.advance();
-          parameters.push(this.expect(TokenType.IDENTIFIER).value);
+          const param = this.advance();
+          parameters.push(param.value);
         }
       }
 
@@ -222,11 +241,11 @@ export class Parser {
 
     const args: AST.Argument[] = [];
     if (!this.check(TokenType.RPAREN)) {
-      args.push(this.advance().value);
+      args.push(this.parseArgument());
 
       while (this.check(TokenType.COMMA)) {
         this.advance();
-        args.push(this.advance().value);
+        args.push(this.parseArgument());
       }
     }
 
@@ -239,6 +258,26 @@ export class Parser {
     };
   }
 
+  // Parse an argument (can be a simple value or field access)
+  private parseArgument(): AST.Argument {
+    const token = this.advance();
+    const value = token.value;
+
+    // Check if this is field access (e.g., Man.genus)
+    if (this.check(TokenType.DOT)) {
+      this.advance(); // consume the dot
+      const field = this.advance().value;
+      return {
+        type: 'FieldAccess',
+        object: value,
+        field: field,
+      };
+    }
+
+    // Otherwise, it's just a simple value
+    return value;
+  }
+
   // ? mortal(SOCRATES).
   private parseQuery(): AST.Query {
     this.expect(TokenType.QUERY);
@@ -248,6 +287,19 @@ export class Parser {
     return {
       type: 'Query',
       predicate,
+    };
+  }
+
+  // X = "value"
+  private parseAssignment(): AST.Assignment {
+    const variable = this.advance().value;
+    this.expect(TokenType.ASSIGN);
+    const value = this.advance().value;
+
+    return {
+      type: 'Assignment',
+      variable,
+      value,
     };
   }
 

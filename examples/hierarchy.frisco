@@ -1,0 +1,40 @@
+# Example: Concept Hierarchies with Genus
+
+# Define a hierarchy of concepts using genus (parent concept)
+concept Thing
+  description = "anything that exists"
+
+concept LivingThing: Thing
+  description = "entity with biological life"
+
+concept Animal: LivingThing
+  description = "living organism that can move"
+
+concept Mammal: Animal
+  description = "warm-blooded vertebrate"
+
+concept Man: Mammal
+  description = "rational animal"
+
+# Define entities
+entity SOCRATES: Man
+  description = "philosopher from Athens"
+
+entity PLATO: Man
+  description = "student of Socrates"
+
+# Access genus property
+? println(Man.genus).
+
+# Access entity's concept property
+? println(SOCRATES.concept).
+
+# Semantic matching with genus
+has_genus_creature(X) :-
+  X.genus ~== "creature".
+
+belongs_to_human_concept(E) :-
+  E.concept ~== "human".
+
+? has_genus_creature(Man).
+? belongs_to_human_concept(SOCRATES).

@@ -20,6 +20,7 @@ const Repl: React.FC<ReplProps> = () => {
   const [shouldExit, setShouldExit] = useState(false);
   const [waitingForInput, setWaitingForInput] = useState(false);
   const [inputResolver, setInputResolver] = useState<((value: string) => void) | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   // Command history navigation
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
@@ -47,6 +48,24 @@ const Repl: React.FC<ReplProps> = () => {
       });
     }
   ));
+
+  // Initialize semantic matcher on startup
+  useEffect(() => {
+    const initializeSemanticMatcher = async () => {
+      try {
+        setHistory([chalk.dim('Initializing semantic matcher (downloading model on first run)...')]);
+        // Give the semantic matcher time to initialize
+        // This happens in the background during first semantic match
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        setHistory([chalk.green('Ready!')]);
+        setIsInitializing(false);
+      } catch (error) {
+        setHistory([chalk.yellow('Note: Semantic matching may be slow on first use')]);
+        setIsInitializing(false);
+      }
+    };
+    initializeSemanticMatcher();
+  }, []);
 
   useEffect(() => {
     if (shouldExit) {
@@ -133,13 +152,14 @@ const Repl: React.FC<ReplProps> = () => {
         try {
           let code = trimmed;
 
-          // Auto-add query syntax for simple predicates
+          // Auto-add query syntax for simple predicates (but not assignments)
           if (!code.startsWith('?') &&
               !code.startsWith('concept ') &&
               !code.startsWith('Concept ') &&
               !code.startsWith('entity ') &&
               !code.startsWith('Entity ') &&
-              !code.includes(':-')) {
+              !code.includes(':-') &&
+              !code.includes(' = ')) {
             code = '? ' + code;
           }
 

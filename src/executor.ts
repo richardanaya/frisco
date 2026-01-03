@@ -20,6 +20,7 @@ export class Executor {
     entities: new Map(),
     rules: [],
   };
+  private globalBindings: Bindings = new Map();
   private matcher: SemanticMatcher;
   private outputHandler: OutputHandler;
   private inputHandler: InputHandler;
@@ -51,7 +52,7 @@ export class Executor {
   }
 
   async execute(program: AST.Program): Promise<void> {
-    // First pass: collect concepts, entities, and rules
+    // First pass: collect concepts, entities, rules, and assignments
     for (const statement of program.statements) {
       if (statement.type === 'ConceptDeclaration') {
         this.kb.concepts.set(statement.name, statement);
@@ -59,6 +60,8 @@ export class Executor {
         this.kb.entities.set(statement.name, statement);
       } else if (statement.type === 'RuleDeclaration') {
         this.kb.rules.push(statement);
+      } else if (statement.type === 'Assignment') {
+        this.globalBindings.set(statement.variable, statement.value);
       }
     }
 
@@ -71,14 +74,22 @@ export class Executor {
   }
 
   private async executeQuery(query: AST.Query): Promise<void> {
-    const bindings = new Map<string, string>();
+    // Start with global bindings
+    const bindings = new Map<string, string>(this.globalBindings);
     const result = await this.evaluatePredicate(query.predicate, bindings);
 
     if (result) {
       this.outputHandler('True');
-      if (bindings.size > 0) {
+      // Show only new bindings (not global ones)
+      const newBindings = new Map<string, string>();
+      for (const [key, value] of bindings) {
+        if (!this.globalBindings.has(key)) {
+          newBindings.set(key, value);
+        }
+      }
+      if (newBindings.size > 0) {
         this.outputHandler('Bindings:');
-        for (const [key, value] of bindings) {
+        for (const [key, value] of newBindings) {
           this.outputHandler(`  ${key} = ${value}`);
         }
       }
@@ -112,8 +123,8 @@ export class Executor {
           const param = rule.head.parameters[i];
           const arg = predicate.arguments[i];
 
-          // Resolve the argument if it's already bound
-          const resolvedArg = this.resolve(arg, bindings);
+          // Resolve the argument (handles both strings and field access)
+          const resolvedArg = this.resolveValue(arg, bindings);
           ruleBindings.set(param, resolvedArg);
         }
 
@@ -166,10 +177,13 @@ export class Executor {
       case 'read_line':
         // read_line(Variable) - reads a line of input and binds it to Variable
         if (predicate.arguments.length === 1) {
-          const varName = predicate.arguments[0];
-          const input = await this.inputHandler('');
-          bindings.set(varName, input);
-          return true;
+          const arg = predicate.arguments[0];
+          // read_line only works with variable names (strings), not field access
+          if (typeof arg === 'string') {
+            const input = await this.inputHandler('');
+            bindings.set(arg, input);
+            return true;
+          }
         }
         return false;
 
@@ -179,14 +193,28 @@ export class Executor {
     }
   }
 
-  private resolveValue(arg: string, bindings: Bindings): string {
+  private resolveValue(arg: string | AST.FieldAccess, bindings: Bindings): string {
+    // Handle field access
+    if (typeof arg === 'object' && arg.type === 'FieldAccess') {
+      const resolvedObject = this.resolve(arg.object, bindings);
+      const fieldValue = this.getFieldValue(resolvedObject, arg.field);
+      if (fieldValue !== null) {
+        // Convert array to string representation if needed
+        if (Array.isArray(fieldValue)) {
+          return `[${fieldValue.join(', ')}]`;
+        }
+        return fieldValue;
+      }
+      return `undefined`;
+    }
+
     // If it's a variable that's bound, return the bound value
-    const resolved = bindings.get(arg);
+    const resolved = bindings.get(arg as string);
     if (resolved !== undefined) {
       return resolved;
     }
     // Otherwise return the argument as-is (could be a literal value)
-    return arg;
+    return arg as string;
   }
 
   private async evaluateConditions(
@@ -236,6 +264,8 @@ export class Executor {
     if (concept) {
       if (fieldName === 'description' && concept.description) {
         return concept.description;
+      } else if (fieldName === 'genus' && concept.genus) {
+        return concept.genus;
       } else if (fieldName === 'attributes') {
         return concept.attributes;
       } else if (fieldName === 'essentials') {
@@ -248,6 +278,8 @@ export class Executor {
     if (entity) {
       if (fieldName === 'description' && entity.description) {
         return entity.description;
+      } else if (fieldName === 'concept') {
+        return entity.conceptType;
       } else if (fieldName === 'conceptType') {
         return entity.conceptType;
       }
@@ -259,6 +291,8 @@ export class Executor {
           return entityConcept.attributes;
         } else if (fieldName === 'essentials') {
           return entityConcept.essentials;
+        } else if (fieldName === 'genus' && entityConcept.genus) {
+          return entityConcept.genus;
         }
       }
     }
