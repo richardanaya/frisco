@@ -1,5 +1,3 @@
-// AST Node Types for Frisco Programming Language
-
 export type Program = {
   type: 'Program';
   statements: Statement[];
@@ -12,22 +10,15 @@ export type Statement =
   | Query
   | Assignment;
 
-// Concept Man.
-//   description = "rational animal"
-//   attributes = [...]
-//   essentials = [...]
-// Or: Concept Man: Animal (with genus/parent concept)
 export type ConceptDeclaration = {
   type: 'ConceptDeclaration';
   name: string;
-  genus: string | null;  // Parent concept
+  genus: string | null;
   description: string | null;
   attributes: string[];
   essentials: string[];
 };
 
-// Entity SOCRATES: Man.
-//   description = "Socrates"
 export type EntityDeclaration = {
   type: 'EntityDeclaration';
   name: string;
@@ -35,8 +26,6 @@ export type EntityDeclaration = {
   description: string | null;
 };
 
-// all_men_mortal :-
-//   Man.attributes ~== "limited existence".
 export type RuleDeclaration = {
   type: 'RuleDeclaration';
   head: PredicateHead;
@@ -45,43 +34,120 @@ export type RuleDeclaration = {
 
 export type PredicateHead = {
   name: string;
-  parameters: string[];
+  parameters: Term[];
 };
 
 export type Condition =
   | SemanticMatchCondition
-  | PredicateCall;
+  | PredicateCall
+  | EqualityCondition
+  | ComparisonCondition
+  | ArithmeticEvaluation;
 
-// Man.attributes ~== "some text"
-export type SemanticMatchCondition = {
-  type: 'SemanticMatch';
-  left: FieldAccess;
-  right: string;
+export type PredicateCall = {
+  type: 'PredicateCall';
+  name: string;
+  arguments: Term[];
 };
 
-// target.description
+export type EqualityCondition = {
+  type: 'Equality';
+  operator: '=' | '==';
+  left: Term;
+  right: Term;
+};
+
+export type ComparisonCondition = {
+  type: 'Comparison';
+  operator: '<' | '>' | '=<' | '>=' | '=:=' | '=\\=';
+  left: Expression;
+  right: Expression;
+};
+
+export type ArithmeticEvaluation = {
+  type: 'ArithmeticEvaluation';
+  target: Term;
+  expression: Expression;
+};
+
+export type SemanticMatchCondition = {
+  type: 'SemanticMatch';
+  left: Term;
+  right: Term;
+};
+
 export type FieldAccess = {
   type: 'FieldAccess';
   object: string;
   field: string;
 };
 
-// mortal(SOCRATES)
-export type PredicateCall = {
-  type: 'PredicateCall';
+export type Term =
+  | Variable
+  | Atom
+  | NumberLiteral
+  | StringLiteral
+  | List
+  | CompoundTerm
+  | FieldAccess
+  | BinaryExpression
+  | UnaryExpression;
+
+export type Variable = {
+  type: 'Variable';
   name: string;
-  arguments: Argument[];
+  anonymous?: boolean;
 };
 
-export type Argument = string | FieldAccess; // Variable, entity name, or field access
+export type Atom = {
+  type: 'Atom';
+  value: string;
+};
 
-// ?- mortal(SOCRATES).
+export type NumberLiteral = {
+  type: 'NumberLiteral';
+  value: number;
+};
+
+export type StringLiteral = {
+  type: 'StringLiteral';
+  value: string;
+};
+
+export type List = {
+  type: 'List';
+  elements: Term[];
+  tail?: Term | null;
+};
+
+export type CompoundTerm = {
+  type: 'CompoundTerm';
+  functor: string;
+  args: Term[];
+};
+
+export type BinaryExpression = {
+  type: 'BinaryExpression';
+  operator: BinaryOperator;
+  left: Expression;
+  right: Expression;
+};
+
+export type UnaryExpression = {
+  type: 'UnaryExpression';
+  operator: '-' | '+';
+  argument: Expression;
+};
+
+export type Expression = Term | BinaryExpression | UnaryExpression;
+
+export type BinaryOperator = '+' | '-' | '*' | '/' | 'mod' | '//' | '^';
+
 export type Query = {
   type: 'Query';
-  predicate: PredicateCall;
+  body: Condition[];
 };
 
-// X = "value"
 export type Assignment = {
   type: 'Assignment';
   variable: string;

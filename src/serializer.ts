@@ -1,5 +1,3 @@
-// Serializer: Convert AST back to Frisco source code
-
 import * as AST from './ast.js';
 
 export class Serializer {
@@ -48,27 +46,52 @@ export class Serializer {
   }
 
   static serializeRule(rule: AST.RuleDeclaration): string {
-    let output = `${rule.head.name}`;
+    const head = `${rule.head.name}(${rule.head.parameters.map((p) => this.termToSource(p)).join(', ')})`;
+    const body = rule.body
+      .map((c) => this.conditionToSource(c))
+      .join(', ');
+    return `${head} :- ${body}.`;
+  }
 
-    if (rule.head.parameters.length > 0) {
-      output += `(${rule.head.parameters.join(', ')})`;
+  static conditionToSource(cond: AST.Condition): string {
+    switch (cond.type) {
+      case 'PredicateCall':
+        return `${cond.name}(${cond.arguments.map((a) => this.termToSource(a)).join(', ')})`;
+      case 'SemanticMatch':
+        return `${this.termToSource(cond.left)} ~== ${this.termToSource(cond.right)}`;
+      case 'Equality':
+        return `${this.termToSource(cond.left)} ${cond.operator} ${this.termToSource(cond.right)}`;
+      case 'Comparison':
+        return `${this.termToSource(cond.left as AST.Term)} ${cond.operator} ${this.termToSource(cond.right as AST.Term)}`;
+      case 'ArithmeticEvaluation':
+        return `${this.termToSource(cond.target)} is ${this.termToSource(cond.expression as AST.Term)}`;
     }
+  }
 
-    output += ` :-\n`;
-
-    rule.body.forEach((condition, idx) => {
-      const isLast = idx === rule.body.length - 1;
-
-      if (condition.type === 'SemanticMatch') {
-        output += `  ${condition.left.object}.${condition.left.field} ~== "${condition.right}"`;
-      } else if (condition.type === 'PredicateCall') {
-        output += `  ${condition.name}(${condition.arguments.join(', ')})`;
+  static termToSource(term: AST.Term): string {
+    switch (term.type) {
+      case 'Variable':
+        return term.name;
+      case 'Atom':
+        return term.value;
+      case 'StringLiteral':
+        return `"${term.value}"`;
+      case 'NumberLiteral':
+        return String(term.value);
+      case 'FieldAccess':
+        return `${term.object}.${term.field}`;
+      case 'List': {
+        const elements = term.elements.map((e) => this.termToSource(e));
+        const tail = term.tail ? `| ${this.termToSource(term.tail)}` : '';
+        return `[${elements.join(', ')}${tail ? ' ' + tail : ''}]`;
       }
-
-      output += isLast ? '.\n' : ',\n';
-    });
-
-    return output;
+      case 'CompoundTerm':
+        return `${term.functor}(${term.args.map((a) => this.termToSource(a)).join(', ')})`;
+      case 'BinaryExpression':
+        return `${this.termToSource(term.left as AST.Term)} ${term.operator} ${this.termToSource(term.right as AST.Term)}`;
+      case 'UnaryExpression':
+        return `${term.operator}${this.termToSource(term.argument as AST.Term)}`;
+    }
   }
 
   static serializeProgram(

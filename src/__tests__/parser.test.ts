@@ -55,12 +55,11 @@ describe('Parser', () => {
     expect(ast.statements[0].type).toBe('RuleDeclaration');
     const rule = ast.statements[0] as any;
     expect(rule.head.name).toBe('mortal');
-    expect(rule.head.parameters).toEqual(['target']);
+    expect(rule.head.parameters[0]).toEqual({ type: 'Variable', name: 'target', anonymous: undefined });
     expect(rule.body).toHaveLength(1);
     expect(rule.body[0].type).toBe('SemanticMatch');
-    expect(rule.body[0].left.object).toBe('target');
-    expect(rule.body[0].left.field).toBe('description');
-    expect(rule.body[0].right).toBe('philosopher');
+    expect(rule.body[0].left).toEqual({ type: 'FieldAccess', object: 'target', field: 'description' });
+    expect(rule.body[0].right).toEqual({ type: 'StringLiteral', value: 'philosopher' });
   });
 
   test('parses rule with multiple conditions', () => {
@@ -88,8 +87,9 @@ describe('Parser', () => {
     expect(ast.statements).toHaveLength(1);
     expect(ast.statements[0].type).toBe('Query');
     const query = ast.statements[0] as any;
-    expect(query.predicate.name).toBe('mortal');
-    expect(query.predicate.arguments).toEqual(['SOCRATES']);
+    expect(query.body[0].type).toBe('PredicateCall');
+    expect(query.body[0].name).toBe('mortal');
+    expect(query.body[0].arguments[0]).toEqual({ type: 'Atom', value: 'SOCRATES' });
   });
 
   test('parses complete program', () => {
