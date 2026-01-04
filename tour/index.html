@@ -28,7 +28,8 @@
                     <li class="section-title">Logic: The Art of Reasoning</li>
                     <li><a href="#evidence" class="nav-link">8. Evidence (Lists)</a></li>
                     <li><a href="#conflict" class="nav-link">9. Conflict (Negation)</a></li>
-                    <li><a href="#argument" class="nav-link">10. The Argument</a></li>
+                    <li><a href="#argument" class="nav-link">10. Advanced: The Argument</a></li>
+                    <li><a href="#synthesis" class="nav-link">11. Complex Synthesis</a></li>
                     
                     <li class="section-title">Reference</li>
                     <li><a href="#cheatsheet" class="nav-link">Cheatsheet</a></li>
@@ -150,21 +151,67 @@ print("A is ", "A").</code></pre>
             <section id="semantics" class="lesson">
                 <h2>6. Measurement Omission</h2>
                 <p>
-                    Here lies the magic. In traditional logic, <code>"dog" == "canine"</code> is False. 
-                    But in human cognition, we omit the specific measurements (spelling, sound) to grasp the <em>meaning</em>.
+                    <strong>"A concept is a mental integration of two or more units... with their particular measurements omitted."</strong> — Ayn Rand
                 </p>
                 <p>
-                    Frisco uses the <strong>Semantic Match Operator</strong> <code>=~=</code> to simulate this.
+                    Traditional logic is brittle. To a standard computer, <code>"dog"</code> and <code>"canine"</code> are as different as <code>"dog"</code> and <code>"math"</code> because their characters don't match. The machine gets stuck on the specific "measurements" (spelling, sound) and misses the identity.
                 </p>
-                <pre><code class="language-frisco">? "The gadfly of Athens" =~= "ancient Greek philosopher".
-# True (High semantic similarity)</code></pre>
+                <p>
+                    Frisco solves this by treating <strong>meaning as a vector space</strong>. 
+                    Using embeddings, we map words to concepts. The distance between vectors represents the "measurements" we omit.
+                </p>
+
+                <h3>The Semantic Operator: <code>=~=</code></h3>
+                <p>
+                    This operator asks: <em>"Do these terms refer to the same concept?"</em> (Is the vector distance within a tolerance threshold?)
+                </p>
+                <pre><code class="language-frisco"># Synonyms match (Measurement omitted: exact word choice)
+? "furious" =~= "angry".
+# True
+
+# Descriptions match (Measurement omitted: phrasing)
+? "The gadfly of Athens" =~= "ancient Greek philosopher".
+# True
+
+# Lists match if ANY element fits (Integration of units)
+? ["crimson", "scarlet", "ruby"] =~= "red".
+# True</code></pre>
+
                 <h3>Dimensional Similarity</h3>
                 <p>
-                    Sometimes we want to compare specific dimensions (like color or shape) without confusing them.
+                    Similarity is context-dependent. "Ruby" and "Blood" are similar in color, but radically different in material. 
+                    To be scientifically precise, we must specify the <strong>Dimension</strong> of comparison.
                 </p>
-                <pre><code class="language-frisco">? similar_attr(color, "crimson", "red").
-# True</code></pre>
-                <p>This allows us to write "fuzzy" rules that are robust to phrasing differences.</p>
+                <p>
+                    Use <code>similar_attr(Dimension, A, B)</code> to scope the measurement omission:
+                </p>
+                <pre><code class="language-frisco"># Are they similar in material?
+? similar_attr(material, "Ruby", "Blood").
+# False (Mineral vs Biological Fluid)
+
+# Are they similar in color?
+? similar_attr(color, "Ruby", "Blood").
+# True (Both are Deep Red)</code></pre>
+
+                <h4>How It Works: Contextual Framing</h4>
+                <p>
+                    You might wonder: <em>How does the machine know what 'color' is?</em>
+                </p>
+                <p>
+                    In the query <code>similar_attr(color, "Ruby", "Blood")</code>, <code>color</code> is an <strong>Atom</strong> (unquoted identifier). We use Atoms as precise code tags, but Frisco uses their <em>names</em> to build the semantic prompt.
+                </p>
+                <ul>
+                    <li>Frisco takes the atom <code>color</code> and the string <code>"Ruby"</code>.</li>
+                    <li>It constructs a natural language phrase: <strong>"color of Ruby"</strong>.</li>
+                    <li>It compares the vector for that phrase against <strong>"color of Blood"</strong>.</li>
+                </ul>
+                <p>
+                    This is why we use atoms like <code>color</code>, <code>material</code>, or <code>shape</code>—they serve double duty as rigid code symbols AND meaningful semantic guides.
+                </p>
+                
+                <p>
+                    <strong>The Power:</strong> This allows you to write rules that focus on <em>essentials</em> (like material properties) while robustly ignoring accidental differences (like poetic descriptions), or vice versa.
+                </p>
             </section>
 
             <!-- 7. Causality -->
@@ -208,25 +255,66 @@ entity ARISTOTLE: Man. description = "The Philosopher".
             <section id="conflict" class="lesson">
                 <h2>9. Conflict: Negation & Cut</h2>
                 <p>
-                    Not all claims are true. We need <strong>Negation</strong> (<code>not</code>) 
-                    and <strong>Cut</strong> (<code>!</code>) to handle contradictions and exceptions.
+                    Reasoning involves contradictions. Sometimes a rule applies <em>unless</em> a specific exception exists. 
+                    Frisco handles this with two powerful tools: <strong>Negation</strong> and the <strong>Cut</strong>.
                 </p>
-                <pre><code class="language-frisco"># A god is not mortal
+
+                <h3>Negation as Failure</h3>
+                <p>
+                    In Frisco, <code>not(X)</code> is true if X <strong>cannot be proven</strong>.
+                </p>
+                <pre><code class="language-frisco"># If we cannot find evidence that X is guilty, we assume innocent.
+innocent(X) :- not(guilty(X)).</code></pre>
+                <div class="note">
+                    <strong>Warning:</strong> This is "closed-world assumption." If the database doesn't know X is guilty, Frisco assumes X is innocent.
+                </div>
+
+                <h3>The Cut (`!`)</h3>
+                <p>
+                    Normally, if a rule fails, Frisco <strong>backtracks</strong> to try other rules. 
+                    The <strong>Cut</strong> (<code>!</code>) stops this. It says: <em>"If you got this far, commit to this path. Do not look for alternatives."</em>
+                </p>
+
+                <h3>Pattern: If-Then-Else</h3>
+                <p>
+                    We use Cut to create exceptions. Consider the definition of <strong>Immortality</strong>:
+                </p>
+
+                <pre><code class="language-frisco"># Rule 1: Gods are immortal (The Exception)
 immortal(X) :- 
     god(X), 
-    !.            # Commit to this choice
-    
-# Otherwise, check standard mortality
-immortal(X) :- not(mortal(X)).</code></pre>
-                <p>
-                    The Cut (<code>!</code>) tells Frisco: "If you got this far, don't look for other answers." 
-                    It is essential for "if-then-else" logic.
-                </p>
+    !.        # &lt;-- THE GATE. If X is a god, stop here. Success!
+
+# Rule 2: Everyone else is immortal only if NOT mortal
+immortal(X) :- 
+    not(mortal(X)).</code></pre>
+
+                <h4>Trace the Logic:</h4>
+                <ol>
+                    <li><strong>Query:</strong> <code>? immortal(ZEUS).</code> (Assume <code>god(ZEUS)</code> is true)
+                        <ul>
+                            <li>Frisco tries Rule 1.</li>
+                            <li><code>god(ZEUS)</code> matches.</li>
+                            <li>It hits the <strong>Cut (!)</strong>. The decision is final.</li>
+                            <li>Result: <strong>True</strong>. (Rule 2 is never touched).</li>
+                        </ul>
+                    </li>
+                    <li><strong>Query:</strong> <code>? immortal(SOCRATES).</code> (Assume Socrates is not a god)
+                        <ul>
+                            <li>Frisco tries Rule 1.</li>
+                            <li><code>god(SOCRATES)</code> fails.</li>
+                            <li>Since it failed <em>before</em> the Cut, Frisco <strong>backtracks</strong>.</li>
+                            <li>Frisco tries Rule 2.</li>
+                            <li>Is <code>not(mortal(SOCRATES))</code> true? No, he is mortal.</li>
+                            <li>Result: <strong>False</strong>.</li>
+                        </ul>
+                    </li>
+                </ol>
             </section>
 
             <!-- 10. The Argument -->
             <section id="argument" class="lesson">
-                <h2>10. The Argument: Justice</h2>
+                <h2>10. Advanced: The Argument: Justice</h2>
                 <p>
                     Let's put it all together. We will determine if a specific action is <strong>Just</strong>.
                 </p>
@@ -258,6 +346,88 @@ is_just(Act) :-
                 <p>
                     This is the power of Frisco. We define our terms, establish our principles, 
                     and let the system <strong>calculate the verdict</strong>.
+                </p>
+
+                <h4>How It Works: The Logic of Exclusion</h4>
+                <p>
+                    This argument works by systematically eliminating possibilities using the Cut (<code>!</code>).
+                </p>
+                <ul>
+                    <li><strong>Rule 1 (Voluntary):</strong> Is it a voluntary exchange? If yes, <strong>Stop</strong> (Cut). It is Just.</li>
+                    <li><strong>Rule 2 (Defense):</strong> Is it a defense of rights? If yes, <strong>Stop</strong> (Cut). It is Just.</li>
+                    <li><strong>Rule 3 (Coercion):</strong> If we reached here, it wasn't voluntary or defensive. Is it Coercive? If yes, <strong>FAIL</strong>. It is NOT Just.</li>
+                </ul>
+                <p>
+                    Frisco acts as an automated judge, walking down the decision tree you built.
+                </p>
+            </section>
+
+            <!-- 11. Complex Synthesis -->
+            <section id="synthesis" class="lesson">
+                <h2>11. Complex Synthesis: The Eminent Domain Case</h2>
+                <p>
+                    A classic conflict in political philosophy is "Public Interest" vs. "Private Rights." 
+                    Governments often use the "greater good" to justify actions that would otherwise be crimes.
+                </p>
+
+                <h3>The Scenario</h3>
+                <p>
+                    Consider the case of <strong>Eminent Domain</strong> (e.g., the Kelo decision).
+                </p>
+                <pre><code class="language-frisco">entity STADIUM_PROJECT: Action.
+  description = "Evicting families from their private homes to build a sports stadium that boosts city tax revenue."</code></pre>
+
+                <h3>The Analysis</h3>
+                <p>
+                    We dissect the event to separate the <strong>Physical Act</strong> from the <strong>Social Justification</strong>.
+                </p>
+
+                <pre><code class="language-frisco"># Dimension 1: The METHOD (Reality)
+# Focuses on "Evicting families from their private homes"
+is_violation(Act) :-
+    similar_attr(method, Act.description, "violation of property rights").
+
+# Dimension 2: The JUSTIFICATION (Utilitarian)
+# Focuses on "boosts city tax revenue"
+is_utilitarian(Act) :-
+    similar_attr(intent, Act.description, "public benefit at the expense of the individual").
+
+# The Synthesis Rule
+analyze_rights_violation(Act) :-
+    println("Analyzing: ", Act),
+    
+    # Check dimensions
+    (is_violation(Act) -> println("  - Method: Rights Violation") ; println("  - Method: Respects Rights")),
+    (is_utilitarian(Act) -> println("  - Justification: Collectivist (The Greater Good)") ; println("  - Justification: Individualist")),
+    
+    # Synthesize
+    is_violation(Act),
+    is_utilitarian(Act),
+    println("  => VERDICT: Injustice. (Individual rights are absolute and cannot be traded for public gain).").</code></pre>
+
+                <h3>The Execution</h3>
+                <pre><code class="language-frisco">? analyze_rights_violation(STADIUM_PROJECT).
+# Output:
+# Analyzing: STADIUM_PROJECT
+#   - Method: Rights Violation
+#   - Justification: Collectivist (The Greater Good)
+#   => VERDICT: Injustice. (Individual rights are absolute and cannot be traded for public gain).
+# True</code></pre>
+                
+                <h4>How It Works: Reality vs. Rhetoric</h4>
+                <p>
+                    Frisco cuts through the political spin:
+                </p>
+                <ol>
+                    <li>
+                        <strong>Method Extraction:</strong> The AI ignores the "stadium" and "revenue." It sees "Evicting families" and matches it to <strong>Rights Violation</strong>.
+                    </li>
+                    <li>
+                        <strong>Justification Extraction:</strong> The AI ignores the eviction. It sees "boosts city revenue" and matches it to <strong>Collectivist/Utilitarian</strong> logic.
+                    </li>
+                </ol>
+                <p>
+                    By isolating these dimensions, Frisco refuses to accept the premise that "more tax revenue" can mathematically cancel out "forced eviction."
                 </p>
             </section>
 

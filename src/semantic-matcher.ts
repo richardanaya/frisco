@@ -75,7 +75,31 @@ export class SemanticMatcher {
     return this.cosineSimilarity(leftEmbed, rightEmbed);
   }
 
-  async matchWithThreshold(left: string | string[], right: string, _dim?: string): Promise<boolean> {
-    return this.match(left, right);
+  async matchWithThreshold(left: string | string[], right: string, dim?: string): Promise<boolean> {
+    if (!dim) {
+      return this.match(left, right);
+    }
+
+    await this.initialize();
+
+    const rightText = `${dim} of ${right}`;
+    const rightEmbed = await this.getEmbedding(rightText);
+
+    if (typeof left === 'string') {
+      const leftText = `${dim} of ${left}`;
+      const leftEmbed = await this.getEmbedding(leftText);
+      const similarity = this.cosineSimilarity(leftEmbed, rightEmbed);
+      return similarity >= this.threshold;
+    } else {
+      for (const item of left) {
+        const leftText = `${dim} of ${item}`;
+        const leftEmbed = await this.getEmbedding(leftText);
+        const similarity = this.cosineSimilarity(leftEmbed, rightEmbed);
+        if (similarity >= this.threshold) {
+          return true;
+        }
+      }
+      return false;
+    }
   }
 }
