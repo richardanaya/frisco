@@ -4,10 +4,11 @@ import { Parser } from '../parser.js';
 describe('Parser', () => {
   test('parses concept declaration', () => {
     const source = `
-      concept Man.
-        description = "rational animal"
-        attributes = ["finite lifespan"]
+      concept Man:
+        description = "rational animal",
+        attributes = ["finite lifespan"],
         essentials = ["rational_faculty"]
+      .
     `;
     const lexer = new Lexer(source);
     const tokens = lexer.tokenize();
@@ -25,8 +26,7 @@ describe('Parser', () => {
 
   test('parses entity declaration', () => {
     const source = `
-      entity SOCRATES: Man.
-        description = "Socrates"
+      entity SOCRATES: Man, description = "Socrates".
     `;
     const lexer = new Lexer(source);
     const tokens = lexer.tokenize();
@@ -62,6 +62,27 @@ describe('Parser', () => {
     expect(rule.body[0].right).toEqual({ type: 'StringLiteral', value: 'philosopher' });
   });
 
+  test('parses rule with uppercase parameter treated as atom', () => {
+    const source = `
+      mortal(X) :-
+        X.description =~= "human".
+    `;
+    const lexer = new Lexer(source);
+    const tokens = lexer.tokenize();
+    const parser = new Parser(tokens);
+    const ast = parser.parse();
+
+    expect(ast.statements).toHaveLength(1);
+    expect(ast.statements[0].type).toBe('RuleDeclaration');
+    const rule = ast.statements[0] as any;
+    expect(rule.head.name).toBe('mortal');
+    expect(rule.head.parameters[0]).toEqual({ type: 'Atom', value: 'X' });
+    expect(rule.body).toHaveLength(1);
+    expect(rule.body[0].type).toBe('SemanticMatch');
+    expect(rule.body[0].left).toEqual({ type: 'FieldAccess', object: 'X', field: 'description' });
+    expect(rule.body[0].right).toEqual({ type: 'StringLiteral', value: 'human' });
+  });
+
   test('parses rule with multiple conditions', () => {
     const source = `
       mortal(target) :-
@@ -94,11 +115,11 @@ describe('Parser', () => {
 
   test('parses complete program', () => {
     const source = `
-      concept Man.
+      concept Man:
         description = "rational animal"
+      .
 
-      entity SOCRATES: Man.
-        description = "Socrates"
+      entity SOCRATES: Man, description = "Socrates".
 
       mortal(x) :- Man.attributes =~= "finite".
 

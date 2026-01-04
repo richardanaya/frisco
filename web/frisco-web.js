@@ -14885,9 +14885,6 @@ var Lexer = class {
     if (keywords[text]) {
       return keywords[text];
     }
-    if (/^[A-Z][A-Z0-9_]*$/.test(text) || /^[A-Z][a-z]/.test(text)) {
-      return "CONSTANT" /* CONSTANT */;
-    }
     return "IDENTIFIER" /* IDENTIFIER */;
   }
   tokenize() {
@@ -15029,11 +15026,11 @@ var Parser = class {
   }
   parseConceptDeclaration() {
     this.expect("CONCEPT" /* CONCEPT */);
-    const name2 = this.expect("CONSTANT" /* CONSTANT */).value;
+    const name2 = this.expect("IDENTIFIER" /* IDENTIFIER */).value;
     let genus = null;
     if (this.match("COLON" /* COLON */)) {
-      if (this.check("CONSTANT" /* CONSTANT */) && this.peek(1).type === "COMMA" /* COMMA */) {
-        genus = this.expect("CONSTANT" /* CONSTANT */).value;
+      if (this.check("IDENTIFIER" /* IDENTIFIER */) && this.peek(1).type === "COMMA" /* COMMA */) {
+        genus = this.expect("IDENTIFIER" /* IDENTIFIER */).value;
         this.expect("COMMA" /* COMMA */);
       } else {
         genus = null;
@@ -15071,9 +15068,9 @@ var Parser = class {
   }
   parseEntityDeclaration() {
     this.expect("ENTITY" /* ENTITY */);
-    const name2 = this.expect("CONSTANT" /* CONSTANT */).value;
+    const name2 = this.expect("IDENTIFIER" /* IDENTIFIER */).value;
     this.expect("COLON" /* COLON */);
-    const conceptType = this.expect("CONSTANT" /* CONSTANT */).value;
+    const conceptType = this.expect("IDENTIFIER" /* IDENTIFIER */).value;
     let description = null;
     const properties = /* @__PURE__ */ new Map();
     if (this.match("COMMA" /* COMMA */)) {
@@ -15200,7 +15197,7 @@ var Parser = class {
     if (leftTerm.type === "CompoundTerm") {
       return { type: "PredicateCall", name: leftTerm.functor, arguments: leftTerm.args };
     }
-    throw new Error(`Unexpected condition at line ${this.peek().line}`);
+    throw new Error(`Unexpected condition at line ${this.peek().line}, column ${this.peek().column}: unexpected token ${this.peek().type} '${this.peek().value}'`);
   }
   parsePredicateCall() {
     const name2 = this.expect("IDENTIFIER" /* IDENTIFIER */).value;
@@ -15248,16 +15245,10 @@ var Parser = class {
       if (name2 === "_") {
         return { type: "Variable", name: name2, anonymous: true };
       }
-      return { type: "Variable", name: name2 };
-    }
-    if (this.check("CONSTANT" /* CONSTANT */)) {
-      const value = this.advance().value;
-      if (this.check("DOT" /* DOT */)) {
-        this.advance();
-        const field = this.advance().value;
-        return { type: "FieldAccess", object: value, field };
+      if (/^[a-z]/.test(name2)) {
+        return { type: "Variable", name: name2 };
       }
-      return { type: "Atom", value };
+      return { type: "Atom", value: name2 };
     }
     if (this.check("LPAREN" /* LPAREN */)) {
       this.advance();
@@ -31764,7 +31755,7 @@ function splitStatements(source) {
     if (char === '"' && (i === 0 || source[i - 1] !== "\\")) {
       inString = !inString;
       current += char;
-    } else if (char === "." && !inString) {
+    } else if (char === "." && !inString && (i + 1 >= source.length || source[i + 1] === " " || source[i + 1] === "\n" || source[i + 1] === "	")) {
       if (current.trim()) {
         statements.push(current.trim());
       }
@@ -31852,10 +31843,13 @@ async function runCode(source) {
   processedSource = processedStatements.filter((s) => s).join(" ");
   appendOutput(source, "input");
   try {
+    console.log("Processed source:", JSON.stringify(processedSource));
     const lexer = new Lexer(processedSource);
     const tokens = lexer.tokenize();
+    console.log("Tokens:", tokens.map((t) => `${t.type}: ${t.value}`).join(", "));
     const parser = new Parser(tokens);
     const ast = parser.parse();
+    console.log("AST:", JSON.stringify(ast, null, 2));
     await executor.execute(ast);
   } catch (error) {
     if (error instanceof Error) {

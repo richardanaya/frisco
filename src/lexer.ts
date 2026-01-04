@@ -25,7 +25,6 @@ export enum TokenType {
   RBRACKET = 'RBRACKET',
 
   IDENTIFIER = 'IDENTIFIER',
-  CONSTANT = 'CONSTANT',
   STRING = 'STRING',
 
   EOF = 'EOF',
@@ -126,10 +125,6 @@ export class Lexer {
 
     if (keywords[text]) {
       return keywords[text];
-    }
-
-    if (/^[A-Z][A-Z0-9_]*$/.test(text) || /^[A-Z][a-z]/.test(text)) {
-      return TokenType.CONSTANT;
     }
 
     return TokenType.IDENTIFIER;

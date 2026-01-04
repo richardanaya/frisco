@@ -5,9 +5,10 @@ import { Executor } from '../executor.js';
 describe('Executor', () => {
   test('stores concepts in knowledge base', async () => {
     const source = `
-      concept Man.
-        description = "rational animal"
+      concept Man:
+        description = "rational animal",
         attributes = ["finite"]
+      .
     `;
     const lexer = new Lexer(source);
     const parser = new Parser(lexer.tokenize());
@@ -24,8 +25,7 @@ describe('Executor', () => {
   test('stores entities in knowledge base', async () => {
     const source = `
       concept Man.
-      entity SOCRATES: Man.
-        description = "Socrates"
+      entity SOCRATES: Man, description = "Socrates".
     `;
     const lexer = new Lexer(source);
     const parser = new Parser(lexer.tokenize());

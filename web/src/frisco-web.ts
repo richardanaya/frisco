@@ -30,11 +30,12 @@ function splitStatements(source: string): string[] {
     if (char === '"' && (i === 0 || source[i - 1] !== '\\')) {
       inString = !inString;
       current += char;
-    } else if (char === '.' && !inString) {
+    } else if (char === '.' && !inString && (i + 1 >= source.length || source[i + 1] === ' ' || source[i + 1] === '\n' || source[i + 1] === '\t')) {
       if (current.trim()) {
         statements.push(current.trim());
       }
       current = '';
+      // Skip the '.' character
     } else {
       current += char;
     }
@@ -147,12 +148,15 @@ async function runCode(source: string) {
 
   appendOutput(source, 'input');
 
-  try {
-    const lexer = new Lexer(processedSource);
-    const tokens = lexer.tokenize();
-    const parser = new Parser(tokens);
-    const ast = parser.parse();
-    await executor.execute(ast);
+   try {
+     console.log('Processed source:', JSON.stringify(processedSource));
+     const lexer = new Lexer(processedSource);
+     const tokens = lexer.tokenize();
+     console.log('Tokens:', tokens.map(t => `${t.type}: ${t.value}`).join(', '));
+     const parser = new Parser(tokens);
+     const ast = parser.parse();
+     console.log('AST:', JSON.stringify(ast, null, 2));
+     await executor.execute(ast);
   } catch (error) {
     if (error instanceof Error) {
       appendOutput(`Error: ${error.message}`, 'error');

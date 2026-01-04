@@ -71,12 +71,12 @@ export class Parser {
 
   private parseConceptDeclaration(): AST.ConceptDeclaration {
     this.expect(TokenType.CONCEPT);
-    const name = this.expect(TokenType.CONSTANT).value;
+    const name = this.expect(TokenType.IDENTIFIER).value;
 
     let genus: string | null = null;
     if (this.match(TokenType.COLON)) {
-      if (this.check(TokenType.CONSTANT) && this.peek(1).type === TokenType.COMMA) {
-        genus = this.expect(TokenType.CONSTANT).value;
+      if (this.check(TokenType.IDENTIFIER) && this.peek(1).type === TokenType.COMMA) {
+        genus = this.expect(TokenType.IDENTIFIER).value;
         this.expect(TokenType.COMMA);
       } else {
         genus = null;
@@ -124,9 +124,9 @@ export class Parser {
 
   private parseEntityDeclaration(): AST.EntityDeclaration {
     this.expect(TokenType.ENTITY);
-    const name = this.expect(TokenType.CONSTANT).value;
+    const name = this.expect(TokenType.IDENTIFIER).value;
     this.expect(TokenType.COLON);
-    const conceptType = this.expect(TokenType.CONSTANT).value;
+    const conceptType = this.expect(TokenType.IDENTIFIER).value;
 
     let description: string | null = null;
     const properties = new Map<string, string>();
@@ -275,7 +275,7 @@ export class Parser {
       return { type: 'PredicateCall', name: leftTerm.functor, arguments: leftTerm.args };
     }
 
-    throw new Error(`Unexpected condition at line ${this.peek().line}`);
+    throw new Error(`Unexpected condition at line ${this.peek().line}, column ${this.peek().column}: unexpected token ${this.peek().type} '${this.peek().value}'`);
   }
 
   private parsePredicateCall(): AST.PredicateCall {
@@ -328,17 +328,10 @@ export class Parser {
       if (name === '_') {
         return { type: 'Variable', name, anonymous: true };
       }
-      return { type: 'Variable', name };
-    }
-
-    if (this.check(TokenType.CONSTANT)) {
-      const value = this.advance().value;
-      if (this.check(TokenType.DOT)) {
-        this.advance();
-        const field = this.advance().value;
-        return { type: 'FieldAccess', object: value, field };
+      if (/^[a-z]/.test(name)) {
+        return { type: 'Variable', name };
       }
-      return { type: 'Atom', value };
+      return { type: 'Atom', value: name };
     }
 
     if (this.check(TokenType.LPAREN)) {
