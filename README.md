@@ -1,6 +1,6 @@
 <div align="center">
 
-![Frisco](frisco.jpeg)
+![Frisco](frisco.png)
 
 # Frisco Programming Language
 
@@ -351,6 +351,57 @@ MIT License - see [LICENSE](LICENSE) for details
 - **Ayn Rand** - Theory of concepts and Objectivist epistemology
 - **Alain Colmerauer & Robert Kowalski** - Prolog and logic programming
 - **Modern NLP Research** - Embedding vectors and semantic similarity
+
+---
+
+## 🧩 What is a Horn Clause?
+
+**Horn clauses** are a fundamental building block of logic programming, named after logician **Alfred Horn** who characterized them in 1951. They are logical formulas with at most one positive conclusion, making them perfect for automated reasoning.
+
+### Structure
+
+In Frisco (and Prolog), Horn clauses take this form:
+
+```frisco
+# Fact (zero conditions, one conclusion)
+mortal(socrates).
+
+# Rule (one or more conditions, one conclusion)
+mortal(X) :- human(X).
+
+# Multiple conditions (all must be true)
+grandparent(X, Z) :- parent(X, Y), parent(Y, Z).
+```
+
+### The General Form
+
+```
+HEAD :- BODY₁, BODY₂, ..., BODYₙ.
+```
+
+Where:
+- **HEAD** = the conclusion (what we're trying to prove)
+- **BODY** = conditions that must all be true (`,` = AND)
+- `:-` means "if" (read: "HEAD is true if all BODY conditions are true")
+
+### Why Horn Clauses Matter
+
+1. **Efficient computation** - Enable systematic backward chaining inference
+2. **Definite logic** - No ambiguity: statements are either provable or not
+3. **Foundation of Prolog** - All Prolog programs are built from Horn clauses
+4. **Backtracking search** - The engine can explore all possible proofs automatically
+
+### Horn Clauses in Frisco
+
+Frisco extends traditional Horn clauses with semantic matching:
+
+```frisco
+mortal(x) :-
+  x.description =~= "philosopher from Athens",
+  Man.attributes =~= "will eventually die".
+```
+
+Here, `mortal(x)` is the HEAD, and the two semantic similarity conditions form the BODY. The `=~=` operator brings fuzzy conceptual matching to classical Horn clause logic.
 
 ---
 
