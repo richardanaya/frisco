@@ -505,6 +505,10 @@ export class Executor {
     if (entity) {
       if (fieldName === 'description' && entity.description) return entity.description;
       if (fieldName === 'concept' || fieldName === 'conceptType') return entity.conceptType;
+      // Check custom properties
+      if (entity.properties && entity.properties.has(fieldName)) {
+        return entity.properties.get(fieldName)!;
+      }
       const entityConcept = this.kb.concepts.get(entity.conceptType);
       if (entityConcept) {
         if (fieldName === 'attributes') return entityConcept.attributes;

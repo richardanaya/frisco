@@ -1,0 +1,17 @@
+# Knowledge base of ingredients as concepts
+concept BUTTER: description = "rich dairy fat, creamy, solid at room temp".
+concept OLIVE_OIL: description = "liquid plant fat, fruity, heart-healthy".
+concept COCONUT_OIL: description = "tropical plant fat, solid at room temp, mild flavor".
+concept LARD: description = "rendered pork fat, solid, savory undertones".
+
+# Test accessing descriptions
+? println(BUTTER.description).
+? println(OLIVE_OIL.description).
+
+# Test semantic matching on descriptions
+is_plant_based(X) :-
+    X.description =~= "plant".
+
+? is_plant_based(OLIVE_OIL).
+? is_plant_based(COCONUT_OIL).
+? is_plant_based(BUTTER).

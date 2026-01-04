@@ -24,6 +24,7 @@ export type EntityDeclaration = {
   name: string;
   conceptType: string;
   description: string | null;
+  properties: Map<string, string>;
 };
 
 export type RuleDeclaration = {

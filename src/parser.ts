@@ -127,16 +127,40 @@ export class Parser {
     const name = this.expect(TokenType.CONSTANT).value;
     this.expect(TokenType.COLON);
     const conceptType = this.expect(TokenType.CONSTANT).value;
-    this.match(TokenType.DOT);
 
     let description: string | null = null;
-    if (this.check(TokenType.DESCRIPTION)) {
-      this.advance();
-      this.expect(TokenType.ASSIGN);
-      description = this.expect(TokenType.STRING).value;
+    const properties = new Map<string, string>();
+
+    // Support comma-separated properties: entity NAME: CONCEPT, prop = "value", ...
+    if (this.match(TokenType.COMMA)) {
+      // Parse first property
+      if (this.match(TokenType.DESCRIPTION)) {
+        this.expect(TokenType.ASSIGN);
+        description = this.expect(TokenType.STRING).value;
+      } else if (this.check(TokenType.IDENTIFIER)) {
+        const propName = this.advance().value;
+        this.expect(TokenType.ASSIGN);
+        const propValue = this.expect(TokenType.STRING).value;
+        properties.set(propName, propValue);
+      }
+
+      // Parse remaining properties
+      while (this.match(TokenType.COMMA)) {
+        if (this.match(TokenType.DESCRIPTION)) {
+          this.expect(TokenType.ASSIGN);
+          description = this.expect(TokenType.STRING).value;
+        } else if (this.check(TokenType.IDENTIFIER)) {
+          const propName = this.advance().value;
+          this.expect(TokenType.ASSIGN);
+          const propValue = this.expect(TokenType.STRING).value;
+          properties.set(propName, propValue);
+        }
+      }
     }
 
-    return { type: 'EntityDeclaration', name, conceptType, description };
+    this.match(TokenType.DOT);
+
+    return { type: 'EntityDeclaration', name, conceptType, description, properties };
   }
 
   private parseRuleOrAssignment(): AST.RuleDeclaration | AST.Assignment {

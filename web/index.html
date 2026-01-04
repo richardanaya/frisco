@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frisco REPL</title>
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --surface: #16213e;
+            --text: #e8e8e8;
+            --accent: #0f3460;
+            --highlight: #e94560;
+            --success: #4ecca3;
+            --muted: #7f8c8d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: var(--surface);
+            padding: 1rem 2rem;
+            border-bottom: 2px solid var(--accent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            color: var(--highlight);
+        }
+
+        #status {
+            font-size: 0.85rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            background: var(--accent);
+        }
+
+        #status.loading {
+            color: #f39c12;
+        }
+
+        #status.ready {
+            color: var(--success);
+        }
+
+        #status.error {
+            color: var(--highlight);
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            gap: 1rem;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        #output {
+            flex: 1;
+            background: var(--surface);
+            border-radius: 8px;
+            padding: 1rem;
+            overflow-y: auto;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            min-height: 300px;
+            border: 1px solid var(--accent);
+        }
+
+        .output-line {
+            margin-bottom: 0.25rem;
+        }
+
+        .output-line.input {
+            color: var(--muted);
+        }
+
+        .output-line.input::before {
+            content: 'frisco> ';
+            color: var(--highlight);
+        }
+
+        .output-line.result {
+            color: var(--success);
+        }
+
+        .output-line.error {
+            color: var(--highlight);
+        }
+
+        .output-line.info {
+            color: var(--muted);
+            font-style: italic;
+        }
+
+        #input-area {
+            display: flex;
+            gap: 0.5rem;
+            background: var(--surface);
+            border-radius: 8px;
+            padding: 0.75rem;
+            border: 1px solid var(--accent);
+        }
+
+        #input-area::before {
+            content: 'frisco>';
+            color: var(--highlight);
+            font-weight: bold;
+            padding: 0.5rem 0;
+        }
+
+        #input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 1rem;
+            outline: none;
+            padding: 0.5rem;
+        }
+
+        #input::placeholder {
+            color: var(--muted);
+        }
+
+        button {
+            background: var(--highlight);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9rem;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #examples {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .example-btn {
+            background: var(--accent);
+            font-size: 0.75rem;
+            padding: 0.3rem 0.6rem;
+        }
+
+        #model-progress {
+            display: none;
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+
+        #model-progress.visible {
+            display: block;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: var(--accent);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 0.25rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--success);
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Frisco REPL</h1>
+        <div id="status" class="loading">Loading model...</div>
+    </header>
+
+    <main>
+        <div id="model-progress">
+            <span id="progress-text">Downloading embedding model...</span>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+
+        <div id="output">
+            <div class="output-line info">Welcome to Frisco - Semantic Logic Programming</div>
+            <div class="output-line info">Loading embedding model for semantic matching...</div>
+        </div>
+
+        <div id="examples">
+            <button class="example-btn" data-code='? "angry" =~= "furious".'>semantic match</button>
+            <button class="example-btn" data-code='? similar_attr(color, "Ruby", "Blood").'>similar_attr</button>
+            <button class="example-btn" data-code='concept Man: description = "rational animal".'>define concept</button>
+            <button class="example-btn" data-code='mortal(X) :- X.description =~= "human".'>define rule</button>
+        </div>
+
+        <div id="input-area">
+            <input type="text" id="input" placeholder="Enter Frisco code..." disabled>
+            <button id="run" disabled>Run</button>
+        </div>
+    </main>
+
+    <script type="module" src="frisco-web.js"></script>
+</body>
+</html>
