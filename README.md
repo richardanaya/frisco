@@ -11,7 +11,7 @@
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-Passing-brightgreen.svg)](src/__tests__)
 
-[Language Specification](LANGUAGE_SPECIFICATION.md) • [Examples](examples/) • [Tour of Frisco](LANGUAGE_SPECIFICATION.md#appendix-tour-of-frisco)
+[Language Specification](LANGUAGE_SPECIFICATION.md) • [Examples](examples/) • [**Tour of Frisco**](https://richardanaya.github.io/frisco/tour/index.html)
 
 </div>
 
@@ -233,7 +233,7 @@ The `=~=` operator compares conceptual similarity:
 | `"dog" =~= "canine"` | ✅ True | Semantically similar |
 | `"happy" =~= "joyful"` | ✅ True | Synonymous |
 | `"cat" =~= "mathematics"` | ❌ False | Unrelated |
-| `["red", "blue"] =~= "crimson"` | ✅ True | Matches "red" |
+| `["dog", "cat"] =~= "canine"` | ✅ True | Matches "dog" |
 
 ---
 
@@ -298,32 +298,128 @@ npm test
 
 ## 🎯 Use Cases
 
-### Philosophy
+### Philosophy: Virtue Ethics
+Reason about ethical concepts using semantic matching and conceptual definitions:
+
 ```frisco
 concept Virtue.
+  description = "excellence of character"
   essentials = ["moral_excellence", "good_character"]
+  attributes = ["praiseworthy", "cultivated through practice"]
 
-virtuous(x) :- x.description =~= "morally praiseworthy act".
+entity COURAGE: Virtue.
+  description = "facing danger with confidence"
+
+entity HONESTY: Virtue.
+  description = "truthfulness in word and deed"
+
+# Determine if an action exemplifies virtue
+virtuous(action) :-
+  action.description =~= "morally praiseworthy behavior",
+  Virtue.essentials =~= "excellence".
+
+# Test with different actions
+? virtuous(COURAGE).
+# True
 ```
 
-### Science
+### Science: Biological Classification
+Model taxonomies and reason about hierarchical relationships:
+
 ```frisco
 concept Mammal.
-  attributes = ["warm-blooded", "hair", "milk"]
+  description = "warm-blooded vertebrate"
+  attributes = ["warm-blooded", "hair or fur", "produces milk", "live birth"]
+  essentials = ["mammary_glands", "vertebrate"]
 
-entity WHALE: Mammal.
+concept Cetacean: Mammal.
   description = "aquatic mammal"
+  attributes = ["lives in water", "streamlined body", "breathes air"]
+
+entity WHALE: Cetacean.
+  description = "large marine mammal"
+
+entity DOLPHIN: Cetacean.
+  description = "intelligent aquatic mammal"
+
+# Classify organisms by shared attributes
+aquatic_mammal(x) :-
+  x.description =~= "lives in ocean",
+  Mammal.attributes =~= "warm-blooded".
+
+has_mammalian_trait(x) :-
+  x.concept =~= "warm-blooded creature".
+
+? aquatic_mammal(WHALE).
+# True
+
+? has_mammalian_trait(DOLPHIN).
+# True
 ```
 
-### Logic
+### Logic: Classical Syllogism
+Implement formal logical reasoning with the classic Socrates example:
+
 ```frisco
-# All men are mortal
-# Socrates is a man
-# Therefore, Socrates is mortal
+concept Man.
+  description = "rational animal"
+  attributes = ["finite lifespan", "biological organism", "mortal"]
+  essentials = ["rational_faculty", "volitional_consciousness"]
+
+entity SOCRATES: Man.
+  description = "philosopher from Athens"
+
+# Major premise: All men are mortal
+man_is_mortal :-
+  Man.attributes =~= "limited existence".
+
+# Minor premise: Socrates is a man
+socrates_is_man :-
+  SOCRATES.description =~= "ancient Greek thinker".
+
+# Conclusion: Therefore, Socrates is mortal
+mortal(x) :-
+  x.description =~= "philosopher from Athens",
+  Man.attributes =~= "will eventually die".
+
+? mortal(SOCRATES).
+# True
 ```
 
 ### Knowledge Representation
-Build taxonomies, ontologies, and semantic networks with precise conceptual relationships.
+Build rich ontologies with multi-level hierarchies and semantic relationships:
+
+```frisco
+concept LivingThing.
+  description = "entity with biological life"
+
+concept Animal: LivingThing.
+  description = "living organism that can move"
+
+concept Mammal: Animal.
+  description = "warm-blooded vertebrate"
+
+concept Primate: Mammal.
+  description = "mammal with advanced cognition"
+  attributes = ["opposable thumbs", "binocular vision", "large brain"]
+
+concept Human: Primate.
+  description = "rational primate"
+  essentials = ["rational_thought", "language", "tool_use"]
+
+entity ARISTOTLE: Human.
+  description = "ancient philosopher and scientist"
+
+# Query the hierarchy
+in_animal_kingdom(x) :- x.genus =~= "creature".
+is_thinking_being(x) :- x.concept =~= "rational being".
+
+? in_animal_kingdom(Human).
+# True
+
+? is_thinking_being(ARISTOTLE).
+# True
+```
 
 ---
 
