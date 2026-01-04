@@ -75,20 +75,19 @@ export class Parser {
 
     let genus: string | null = null;
     if (this.match(TokenType.COLON)) {
-      genus = this.expect(TokenType.CONSTANT).value;
-    }
+      if (this.check(TokenType.CONSTANT) && this.peek(1).type === TokenType.COMMA) {
+        genus = this.expect(TokenType.CONSTANT).value;
+        this.expect(TokenType.COMMA);
+      } else {
+        genus = null;
+      }
 
-    this.match(TokenType.DOT);
+      // parse comma-separated properties
+      let description: string | null = null;
+      let attributes: string[] = [];
+      let essentials: string[] = [];
 
-    let description: string | null = null;
-    let attributes: string[] = [];
-    let essentials: string[] = [];
-
-    while (
-      this.check(TokenType.DESCRIPTION) ||
-      this.check(TokenType.ATTRIBUTES) ||
-      this.check(TokenType.ESSENTIALS)
-    ) {
+      // parse first property
       if (this.match(TokenType.DESCRIPTION)) {
         this.expect(TokenType.ASSIGN);
         description = this.expect(TokenType.STRING).value;
@@ -99,9 +98,28 @@ export class Parser {
         this.expect(TokenType.ASSIGN);
         essentials = this.parseIdentifierOrStringArray();
       }
+
+      // then comma-separated
+      while (this.match(TokenType.COMMA)) {
+        if (this.match(TokenType.DESCRIPTION)) {
+          this.expect(TokenType.ASSIGN);
+          description = this.expect(TokenType.STRING).value;
+        } else if (this.match(TokenType.ATTRIBUTES)) {
+          this.expect(TokenType.ASSIGN);
+          attributes = this.parseStringArray();
+        } else if (this.match(TokenType.ESSENTIALS)) {
+          this.expect(TokenType.ASSIGN);
+          essentials = this.parseIdentifierOrStringArray();
+        }
+      }
+
+      this.expect(TokenType.DOT);
+      return { type: 'ConceptDeclaration', name, genus, description, attributes, essentials };
     }
 
-    return { type: 'ConceptDeclaration', name, genus, description, attributes, essentials };
+    // old style fallback, but we can remove it since we're updating
+    this.match(TokenType.DOT);
+    return { type: 'ConceptDeclaration', name, genus: null, description: null, attributes: [], essentials: [] };
   }
 
   private parseEntityDeclaration(): AST.EntityDeclaration {

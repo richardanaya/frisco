@@ -4,15 +4,9 @@
 ? println("").
 
 # 3. Existence: The Given
-concept Man.
-  description = "Rational animal"
-  attributes = ["biological", "bipedal", "mammal"]
-  essentials = ["rational_faculty", "volitional_consciousness"]
+concept Man: description = "Rational animal", attributes = ["biological", "bipedal", "mammal"], essentials = ["rational_faculty", "volitional_consciousness"].
 
 entity SOCRATES: Man.
-  description = "The gadfly of Athens"
-  origin = "Athens"
-  method = "Dialectic"
 
 # 4. Identity: Abstraction
 # (Already defined Man above)
@@ -68,14 +62,11 @@ immortal(X) :-
 ? immortal(SOCRATES).
 
 # 10. The Argument: Justice
-concept Justice.
-  essentials = ["respect_for_rights", "objective_law"]
+concept Justice: essentials = ["respect_for_rights", "objective_law"].
 
-concept Action.
-  attributes = ["voluntary", "coercive"]
+concept Action: attributes = ["voluntary", "coercive"].
 
-entity TAXATION: Action.
-  description = "State seizure of income"
+entity TAXATION: Action, description = "State seizure of income".
 
 is_just(Act) :-
     Act.description =~= "voluntary exchange",
@@ -94,8 +85,7 @@ is_just(Act) :-
 ? is_just(TAXATION).
 
 # 11. Complex Synthesis: The Eminent Domain Case
-entity STADIUM_PROJECT: Action.
-  description = "Evicting families from their private homes to build a sports stadium that boosts city tax revenue."
+entity STADIUM_PROJECT: Action, description = "Evicting homes to build stadium".
 
 # Dimension 1: The METHOD
 is_violation(Act) :-
