@@ -178,12 +178,6 @@ export class Lexer {
         continue;
       }
 
-      if (char === '\\' && this.peek(1) === '+') {
-        this.advance();
-        this.advance();
-        tokens.push({ type: TokenType.NEGATION, value: '\\+', line, column });
-        continue;
-      }
 
       if (char === '=' && this.peek(1) === '=') {
         this.advance();

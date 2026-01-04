@@ -206,6 +206,60 @@ print("A is ", "A").</code></pre>
                 <p>
                     <strong>The Power:</strong> This allows you to write rules that focus on <em>essentials</em> (like material properties) while robustly ignoring accidental differences (like poetic descriptions), or vice versa.
                 </p>
+
+                <h4>Example: Interactive Ingredient Substitute Finder</h4>
+                <pre><code class="language-frisco"># Knowledge base of ingredients
+BUTTER = concept:
+    description: "rich dairy fat, creamy, solid at room temp".
+OLIVE_OIL = concept:
+    description: "liquid plant fat, fruity, heart-healthy".
+COCONUT_OIL = concept:
+    description: "tropical plant fat, solid at room temp, mild flavor".
+LARD = concept:
+    description: "rendered pork fat, solid, savory undertones".
+
+# Can substitute if similar in cooking function AND texture
+good_substitute(X, Y) :-
+    similar_attr(cooking_function, X.description, Y.description),
+    similar_attr(texture, X.description, Y.description).
+
+# Vegan substitute: must be plant-based
+vegan_substitute(X, Y) :-
+    good_substitute(X, Y),
+    Y.description =~= "plant".
+
+# Interactive: ask user what they need to replace
+find_substitute :-
+    println("What ingredient do you need to substitute?"),
+    readln(Need),
+    println("Describe what you have available:"),
+    readln(Have),
+    check_substitute(Need, Have).
+
+check_substitute(Need, Have) :-
+    similar_attr(cooking_function, Need, Have),
+    similar_attr(texture, Need, Have),
+    println("✓ Good substitute! Similar function and texture.").
+
+check_substitute(Need, Have) :-
+    similar_attr(cooking_function, Need, Have),
+    not(similar_attr(texture, Need, Have)),
+    println("⚠ Partial match: same function, different texture.").
+
+check_substitute(Need, Have) :-
+    not(similar_attr(cooking_function, Need, Have)),
+    println("✗ Poor substitute: different cooking function.").
+
+# Try it:
+? find_substitute.
+# > "butter"
+# > "olive oil"
+# => "⚠ Partial match: same function, different texture."</code></pre>
+                <p>
+                    This combines <code>=~=</code> for broad semantic checks ("is it plant-based?"),
+                    <code>similar_attr</code> for precise dimensional comparison (cooking function vs texture),
+                    and <code>readln</code> for interactive user input.
+                </p>
             </section>
 
             <!-- 7. Causality -->

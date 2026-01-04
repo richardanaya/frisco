@@ -163,7 +163,7 @@ True
 ### 6. Add Negation (Negation as Failure)
 
 **Current:** No negation operator
-**Needed:** `not` or `\+` operator
+**Needed:** `not` operator
 
 **Why Important:** Expressing "not a member" or "doesn't have property" is common.
 
