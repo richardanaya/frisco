@@ -37,18 +37,12 @@ Frisco is a logic programming language combining Prolog-style inference with Obj
 ### concept Declaration
 
 ```frisco
-concept <Name>.
-  description = "<text>"
-  attributes = [<string-list>]
-  essentials = [<identifier-list>]
+concept <Name>: description = "<text>", attributes = [<string-list>], essentials = [<identifier-list>].
 ```
 
 **Example:**
 ```frisco
-concept Dog.
-  description = "domesticated canine"
-  attributes = ["four legs", "furry", "loyal"]
-  essentials = ["mammal", "carnivore"]
+concept Dog: description = "domesticated canine", attributes = ["four legs", "furry", "loyal"], essentials = ["mammal", "carnivore"].
 ```
 
 ### entity Declaration
@@ -60,8 +54,18 @@ entity <NAME>: <ConceptType>.
 
 **Example:**
 ```frisco
-entity FIDO: Dog.
-  description = "golden retriever"
+entity FIDO: Dog, description = "golden retriever".
+```
+
+### Concept Inheritance
+
+```frisco
+concept <Derived>: <Base>, <additional properties>.
+```
+
+**Example:**
+```frisco
+concept Philosopher: Person, description = "lover of wisdom".
 ```
 
 ### Rule Declaration
@@ -204,15 +208,11 @@ predator(x) :-
 ### Example 3: Philosophical Reasoning
 
 ```frisco
-concept Man.
-  description = "rational animal"
-  essentials = ["reason", "free_will"]
+concept Man: description = "rational animal", essentials = ["reason", "free_will"].
 
-concept Mortal.
-  attributes = ["finite lifespan"]
+concept Mortal: attributes = ["finite lifespan"].
 
-entity ARISTOTLE: Man.
-  description = "Greek philosopher"
+entity ARISTOTLE: Man, description = "Greek philosopher".
 
 mortal(x) :-
   Man.essentials =~= "rational faculty",

@@ -98,10 +98,7 @@ print("A is ", "A").</code></pre>
                 <p>
                     Let's introduce our protagonist.
                 </p>
-                <pre><code class="language-frisco">entity SOCRATES: Man.
-  description = "The gadfly of Athens"
-  origin = "Athens"
-  method = "Dialectic"</code></pre>
+                <pre><code class="language-frisco">entity SOCRATES: Man, description = "The gadfly of Athens", origin = "Athens", method = "Dialectic".</code></pre>
                 <p>
                     Here, <code>SOCRATES</code> is the identifier (always Uppercase). 
                     <code>Man</code> is the concept he belongs to (we'll define that next).
@@ -117,10 +114,7 @@ print("A is ", "A").</code></pre>
                     A <strong>Concept</strong> is defined by its <em>essentials</em> (what makes it what it is) 
                     and its <em>attributes</em> (observable properties).
                 </p>
-                <pre><code class="language-frisco">concept Man.
-  description = "Rational animal"
-  attributes = ["biological", "bipedal", "mammal"]
-  essentials = ["rational_faculty", "volitional_consciousness"]</code></pre>
+                <pre><code class="language-frisco">concept Man: description = "Rational animal", attributes = ["biological", "bipedal", "mammal"], essentials = ["rational_faculty", "volitional_consciousness"].</code></pre>
                 <div class="note">
                     <strong>Objectivist Note:</strong> Notice we define <code>essentials</code>. 
                     This isn't just metadata; it's how we will later scientifically classify entities.
@@ -261,8 +255,8 @@ mortal(X) :- god(X).              # Rule 2 (gods are immortal, but wait...)</cod
                     An argument often requires gathering all available evidence. 
                     We use <code>findall</code> to collect solutions into a List.
                 </p>
-                <pre><code class="language-frisco">entity PLATO: Man. description = "Student of Socrates".
-entity ARISTOTLE: Man. description = "The Philosopher".
+                <pre><code class="language-frisco">entity PLATO: Man, description = "Student of Socrates".
+entity ARISTOTLE: Man, description = "The Philosopher".
 
 # Gather all philosophers
 ? findall(P, P.description =~= "philosopher", Philosophers).
@@ -339,14 +333,11 @@ immortal(X) :-
                 <p>
                     Let's put it all together. We will determine if a specific action is <strong>Just</strong>.
                 </p>
-                <pre><code class="language-frisco">concept Justice.
-  essentials = ["respect_for_rights", "objective_law"]
+                <pre><code class="language-frisco">concept Justice: essentials = ["respect_for_rights", "objective_law"].
 
-concept Action.
-  attributes = ["voluntary", "coercive"]
+concept Action: attributes = ["voluntary", "coercive"].
 
-entity TAXATION: Action.
-  description = "State seizure of income"
+entity TAXATION: Action, description = "State seizure of income".
 
 # The Definition of Justice
 is_just(Act) :-
@@ -395,8 +386,7 @@ is_just(Act) :-
                 <p>
                     Consider the case of <strong>Eminent Domain</strong> (e.g., the Kelo decision).
                 </p>
-                <pre><code class="language-frisco">entity STADIUM_PROJECT: Action.
-  description = "Evicting families from their private homes to build a sports stadium that boosts city tax revenue."</code></pre>
+                <pre><code class="language-frisco">entity STADIUM_PROJECT: Action, description = "Evicting families from their private homes to build a sports stadium that boosts city tax revenue".</code></pre>
 
                 <h3>The Analysis</h3>
                 <p>

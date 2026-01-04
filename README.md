@@ -37,13 +37,9 @@ Frisco is a **logic programming language** focused on argument and ontology anal
 - **Type guards:** `is_atom/1`, `is_list/1`, `is_bound/1`, `is_unbound/1` to keep reasoning paths well-formed.
 
 ```frisco
-concept Man.
-  description = "rational animal"
-  attributes = ["finite lifespan", "biological organism"]
-  essentials = ["rational_faculty", "volitional_consciousness"]
+concept Man: description = "rational animal", attributes = ["finite lifespan", "biological organism"], essentials = ["rational_faculty", "volitional_consciousness"].
 
-entity SOCRATES: Man.
-  description = "Socrates"
+entity SOCRATES: Man, description = "Socrates".
 
 mortal(x) :-
   x.description =~= "philosopher from Athens",
@@ -77,10 +73,7 @@ In Frisco:
 - **Descriptions** provide the conceptual integration
 
 ```frisco
-concept Triangle.
-  description = "three-sided polygon"
-  essentials = ["three_sides", "three_angles"]  # What makes it a triangle
-  attributes = ["closed_shape", "plane_figure"]  # Observable properties
+concept Triangle: description = "three-sided polygon", essentials = ["three_sides", "three_angles"], attributes = ["closed_shape", "plane_figure"].
 ```
 
 ### Embedding Vectors: Computing Conceptual Similarity
@@ -146,10 +139,10 @@ frisco> ? println("Hello, World!").
   Hello, World!
   True
 
-frisco> concept Man. description = "rational animal"
+frisco> concept Man: description = "rational animal".
   (no output)
 
-frisco> entity SOCRATES: Man. description = "philosopher"
+frisco> entity SOCRATES: Man, description = "philosopher".
   (no output)
 
 frisco> ? println(SOCRATES).
