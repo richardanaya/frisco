@@ -528,4 +528,8 @@ export class Executor {
   getOutputHandler(): OutputHandler {
     return this.outputHandler;
   }
+
+  getMatcher(): SemanticMatcher {
+    return this.matcher;
+  }
 }

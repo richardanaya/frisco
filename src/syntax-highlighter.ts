@@ -22,7 +22,7 @@ export class SyntaxHighlighter {
     code = code.replace(/\b([A-Z][A-Z0-9_]*)\b/g, chalk.cyan('$1'));
 
     // Built-in predicates
-    code = code.replace(/\b(print|println|readln|is_unbound|is_bound|is_atom|is_number|is_list|findall|setof)\b/g, chalk.yellow.bold('$1'));
+    code = code.replace(/\b(print|println|readln|is_unbound|is_bound|is_atom|is_list|findall|setof|similar_attr)\b/g, chalk.yellow.bold('$1'));
 
     // Comments
     code = code.replace(/(#.*$)/gm, chalk.gray('$1'));

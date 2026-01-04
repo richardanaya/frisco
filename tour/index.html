@@ -29,7 +29,7 @@
                     <li><a href="#types" class="nav-link">Terms & Types</a></li>
                     <li><a href="#control" class="nav-link">Negation, Cut, Control</a></li>
                     <li><a href="#lists" class="nav-link">Lists & Pattern Matching</a></li>
-                    <li><a href="#arithmetic" class="nav-link">Arithmetic & Comparisons</a></li>
+                    <li><a href="#semantic-comparison" class="nav-link">Semantic Comparison</a></li>
                     <li><a href="#solutions" class="nav-link">Multiple Solutions</a></li>
                     <li class="section-title">Advanced</li>
                     <li><a href="#builtins" class="nav-link">Built-ins Reference</a></li>
@@ -358,32 +358,25 @@ False</code></pre>
                 <ul>
                     <li><code>=</code>: Unification (binds variables, structural)</li>
                     <li><code>==</code>: Structural equality test (no binding)</li>
-                    <li><code>is</code>: Evaluate arithmetic on the right, then unify left with the numeric result</li>
-                    <li><code>=:=</code> / <code>=\=</code>: Numeric equality/inequality tests (no binding)</li>
                     <li><code>=~=</code>: Semantic match using embeddings (strings/lists)</li>
+                    <li><code>similar_attr(Dim, A, B)</code>: Semantic comparison scoped to a dimension</li>
                 </ul>
                 <pre><code class="language-frisco">% Unify
-? X = [1,2,3].
+? X = [a,b].
 Bindings:
-  X = [1, 2, 3]
+  X = [a, b]
 True
 
 % Structural equality
-? [1,2] == [1,2].
-True
-
-% Arithmetic binding
-? Sum is 3 + 4 * 2.
-Bindings:
-  Sum = 11
-True
-
-% Numeric comparison (no binding)
-? 3 + 4 * 2 =:= 11.
+? [red, blue] == [red, blue].
 True
 
 % Semantic match
 ? "canine" =~= "dog".
+True
+
+% Dimensional semantic match
+? similar_attr(color, "deep crimson", "dark red").
 True</code></pre>
             </section>
 
@@ -397,9 +390,8 @@ True</code></pre>
                 <ul>
                     <li><strong>Unification</strong> (<code>=</code>) is logic-level: it binds variables to any term and drives backtracking.</li>
                     <li><strong>Structural test</strong> (<code>==</code>) checks shapes without binding, useful in guards.</li>
-                    <li><strong>Arithmetic eval</strong> (<code>is</code>) runs computations; separating it avoids implicit math during logic unification.</li>
-                    <li><strong>Numeric comparisons</strong> (<code>=:=</code>, <code>=\=</code>) compare evaluated numbers without binding.</li>
-                    <li><strong>Semantic match</strong> (<code>=~=</code>) is Frisco-specific and fuzzy; keeping it separate preserves deterministic equality.</li>
+                    <li><strong>Semantic match</strong> (<code>=~=</code>) is fuzzy; keeping it separate preserves deterministic equality for <code>=</code>/<code>==</code>.</li>
+                    <li><strong>Dimensional semantic</strong> (<code>similar_attr/3</code>) scopes similarity to a specific attribute dimension.</li>
                 </ul>
                 <p>
                     This split lets the engine stay declarative and backtracking-safe, while arithmetic and semantic
@@ -448,42 +440,32 @@ sign(X) :- X > 0 -> println("positive") ; println("non-positive").</code></pre>
                     Lists are first-class with head/tail pattern matching. Use <code>[H|T]</code> to destructure.
                 </p>
                 <pre><code class="language-frisco">% Literals
-[1, 2, 3]
-[H|T] = [1, 2, 3].  % H = 1, T = [2, 3]
+[a, b, c]
+[H|T] = [a, b, c].  % H = a, T = [b, c]
 
 % Append
 append([], L, L).
 append([H|T1], L2, [H|T3]) :- append(T1, L2, T3).
 
-? append([1,2], [3,4], R).
+? append([red], [blue], R).
 Bindings:
-  R = [1, 2, 3, 4]
+  R = [red, blue]
 True</code></pre>
                 <p>
-                    Built-ins include <code>member/2</code>, <code>append/3</code>, <code>length/2</code>, <code>nth/3</code>, and
-                    <code>reverse/2</code>.
+                    Built-ins include <code>member/2</code>, <code>append/3</code>, <code>reverse/2</code>, and <code>is_list/1</code>.
                 </p>
             </section>
 
-            <section id="arithmetic" class="lesson">
-                <h2>Arithmetic & Comparisons</h2>
+            <section id="semantic-comparison" class="lesson">
+                <h2>Semantic Comparison</h2>
                 <p>
-                    Numbers and arithmetic operators are supported. Use <code>is</code> to evaluate expressions and bind
-                    results. Comparisons include <code>&lt;</code>, <code>&gt;</code>, <code>=&lt;</code>, <code>&gt;=</code>, <code>=:=</code>, and <code>=\=</code>.
+                    Frisco supports semantic similarity via embeddings. Use <code>=~=</code> for fuzzy equality and
+                    <code>similar_attr/3</code> to compare descriptors within a dimension.
                 </p>
-                <pre><code class="language-frisco">factorial(0, 1).
-factorial(N, F) :-
-  N > 0,
-  N1 is N - 1,
-  factorial(N1, F1),
-  F is N * F1.
-
-? factorial(5, R).
-Bindings:
-  R = 120
+                <pre><code class="language-frisco">? "canine" =~= "dog".
 True
 
-? 3 + 4 * 2 =:= 11.
+? similar_attr(color, "deep crimson", "dark red").
 True</code></pre>
             </section>
 
@@ -536,9 +518,8 @@ True</code></pre>
                 <ul>
                     <li><code>member(Element, List)</code> — succeeds or generates elements.</li>
                     <li><code>append(A, B, Result)</code> — concatenate or split.</li>
-                    <li><code>length(List, N)</code> — length of list.</li>
-                    <li><code>nth(N, List, Element)</code> — 1-based access.</li>
                     <li><code>reverse(List, Reversed)</code> — reverse a list.</li>
+                    <li><code>is_list(X)</code> — succeeds for lists.</li>
                 </ul>
                 <details>
                   <summary>Examples</summary>
@@ -554,42 +535,23 @@ Bindings:
   R = [1, 2, 3, 4]
 True
 
-? length([x,y,z], N).
+? reverse([red, blue], R).
 Bindings:
-  N = 3
-True
-
-? nth(2, [10,20,30], X).
-Bindings:
-  X = 20
-True
-
-? reverse([1,2,3], R).
-Bindings:
-  R = [3, 2, 1]
+  R = [blue, red]
 True</code></pre>
                 </details>
 
-                <h3>Arithmetic and comparisons</h3>
+                <h3>Semantic comparison</h3>
                 <ul>
-                    <li><code>is</code> — evaluate right-hand expression, bind left.</li>
-                    <li><code>&lt;</code>, <code>&gt;</code>, <code>=&lt;</code>, <code>&gt;=</code>, <code>=:=</code>, <code>=\=</code> — numeric tests only.</li>
                     <li><code>=~=</code> — semantic match (fuzzy string/list comparison via embeddings).</li>
+                    <li><code>similar_attr(Dim, A, B)</code> — succeeds if descriptors <code>A</code> and <code>B</code> are semantically close for a dimension.</li>
                 </ul>
                 <details>
                   <summary>Examples</summary>
-                  <pre><code class="language-frisco">? Sum is 3 + 4 * 2.
-Bindings:
-  Sum = 11
+                  <pre><code class="language-frisco">? "canine" =~= "dog".
 True
 
-? 7 =:= 3 + 4.
-True
-
-? 5 =\= 2 * 3.
-True
-
-? "canine" =~= "dog".
+? similar_attr(color, "deep crimson", "dark red").
 True</code></pre>
                 </details>
 
@@ -598,7 +560,6 @@ True</code></pre>
                     <li><code>is_unbound(X)</code> — succeeds if <code>X</code> is an unbound variable.</li>
                     <li><code>is_bound(X)</code> — succeeds if <code>X</code> is not a free variable.</li>
                     <li><code>is_atom(X)</code> — succeeds for atoms or string literals.</li>
-                    <li><code>is_number(X)</code> — succeeds for numeric literals.</li>
                     <li><code>is_list(X)</code> — succeeds for lists.</li>
                     <li>Anonymous <code>_</code> is always fresh and unbound.</li>
                 </ul>
@@ -615,10 +576,7 @@ True
 ? is_atom("dog").
 True
 
-? is_number(42).
-True
-
-? is_list([1,2,3]).
+? is_list([a,b]).
 True</code></pre>
                 </details>
 

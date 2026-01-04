@@ -11,7 +11,7 @@ Prism.languages.frisco = {
     },
     'keyword': /\b(?:concept|entity|Concept|Entity)\b/,
     'property': /\b(?:description|attributes|essentials|type)\b/,
-'builtin': /\b(?:println|print|readln|is_unbound|is_bound|is_atom|is_number|is_list|findall|setof)\b/,
+'builtin': /\b(?:println|print|readln|is_unbound|is_bound|is_atom|is_list|findall|setof|similar_attr)\b/,
 'operator': {
         pattern: /:-|=~=|=/,
 

@@ -73,6 +73,14 @@ const builtinTable: Record<string, BuiltinHandler> = {
     const t = exec.deref(args[0], subst);
     if (t.type === 'List') yield subst;
   },
+  similar_attr: async function* (args, subst, exec) {
+    if (args.length !== 3) return;
+    const dim = exec.termToString(exec.deref(args[0], subst), subst);
+    const a = exec.termToString(exec.deref(args[1], subst), subst).replace(/^"|"$/g, '');
+    const b = exec.termToString(exec.deref(args[2], subst), subst).replace(/^"|"$/g, '');
+    const ok = await exec.getMatcher().matchWithThreshold(a, b, dim);
+    if (ok) yield subst;
+  },
   is_unbound: async function* (args, subst, exec) {
     if (args.length !== 1) return;
     const t = exec.deref(args[0], subst);

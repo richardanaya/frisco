@@ -1,5 +1,3 @@
-// Semantic Matching using FastEmbed
-
 import { EmbeddingModel, FlagEmbedding } from 'fastembed';
 
 export class SemanticMatcher {
@@ -12,7 +10,6 @@ export class SemanticMatcher {
 
   async initialize(): Promise<void> {
     if (!this.model) {
-      // Use a fast, small model for embeddings
       this.model = await FlagEmbedding.init({
         model: EmbeddingModel.BGESmallENV15,
       });
@@ -54,15 +51,12 @@ export class SemanticMatcher {
     await this.initialize();
 
     if (typeof left === 'string') {
-      // Simple string-to-string comparison
       const leftEmbed = await this.getEmbedding(left);
       const rightEmbed = await this.getEmbedding(right);
       const similarity = this.cosineSimilarity(leftEmbed, rightEmbed);
       return similarity >= this.threshold;
     } else {
-      // Array: match if at least one element matches
       const rightEmbed = await this.getEmbedding(right);
-
       for (const item of left) {
         const leftEmbed = await this.getEmbedding(item);
         const similarity = this.cosineSimilarity(leftEmbed, rightEmbed);
@@ -70,7 +64,6 @@ export class SemanticMatcher {
           return true;
         }
       }
-
       return false;
     }
   }
@@ -80,5 +73,9 @@ export class SemanticMatcher {
     const leftEmbed = await this.getEmbedding(left);
     const rightEmbed = await this.getEmbedding(right);
     return this.cosineSimilarity(leftEmbed, rightEmbed);
+  }
+
+  async matchWithThreshold(left: string | string[], right: string, _dim?: string): Promise<boolean> {
+    return this.match(left, right);
   }
 }
