@@ -13,6 +13,8 @@ type KnowledgeBase = {
 export type OutputHandler = (message: string) => void;
 export type InputHandler = (prompt?: string) => Promise<string>;
 
+const CUT_MARKER = '__CUT__';
+
 export class Executor {
   private kb: KnowledgeBase = {
     concepts: new Map(),
@@ -94,6 +96,10 @@ export class Executor {
 
     const [first, ...rest] = goals;
     for await (const nextSubst of this.evaluateCondition(first, subst)) {
+      if (this.hasCut(nextSubst)) {
+        yield* this.evaluateGoals(rest, nextSubst);
+        return;
+      }
       yield* this.evaluateGoals(rest, nextSubst);
     }
   }
@@ -102,13 +108,11 @@ export class Executor {
     switch (condition.type) {
       case 'PredicateCall':
         yield* this.evaluatePredicate(condition, subst);
-        break;
+        return;
       case 'SemanticMatch': {
         const success = await this.evaluateSemanticMatch(condition, subst);
-        if (success) {
-          yield subst;
-        }
-        break;
+        if (success) yield subst;
+        return;
       }
       case 'Equality': {
         if (condition.operator === '=') {
@@ -117,26 +121,51 @@ export class Executor {
         } else {
           const left = this.deref(condition.left, subst);
           const right = this.deref(condition.right, subst);
-          if (this.termsEqual(left, right)) {
-            yield subst;
+          if (this.termsEqual(left, right)) yield subst;
+        }
+        return;
+      }
+      case 'Negation': {
+        let succeeded = false;
+        for await (const _ of this.evaluateGoals(condition.goals, subst)) {
+          succeeded = true;
+          break;
+        }
+        if (!succeeded) yield subst;
+        return;
+      }
+      case 'Disjunction': {
+        for await (const leftSubst of this.evaluateGoals(condition.left, subst)) {
+          yield leftSubst;
+          if (this.hasCut(leftSubst)) return;
+        }
+        for await (const rightSubst of this.evaluateGoals(condition.right, subst)) {
+          yield rightSubst;
+          if (this.hasCut(rightSubst)) return;
+        }
+        return;
+      }
+      case 'IfThenElse': {
+        let thenSatisfied = false;
+        for await (const condSubst of this.evaluateGoals(condition.condition, subst)) {
+          thenSatisfied = true;
+          for await (const thenSubst of this.evaluateGoals(condition.thenBranch, condSubst)) {
+            yield thenSubst;
+            if (this.hasCut(thenSubst)) return;
+          }
+          return;
+        }
+        if (!thenSatisfied) {
+          for await (const elseSubst of this.evaluateGoals(condition.elseBranch, subst)) {
+            yield elseSubst;
+            if (this.hasCut(elseSubst)) return;
           }
         }
-        break;
+        return;
       }
-
-      case 'Comparison': {
-        const left = await this.evaluateExpression(condition.left, subst);
-        const right = await this.evaluateExpression(condition.right, subst);
-        const ok = this.compareValues(condition.operator, left, right);
-        if (ok) yield subst;
-        break;
-      }
-      case 'ArithmeticEvaluation': {
-        const value = await this.evaluateExpression(condition.expression, subst);
-        const targetTerm = this.deref(condition.target, subst);
-        const resultSubst = this.unify(targetTerm, this.toNumberTerm(value), subst);
-        if (resultSubst) yield resultSubst;
-        break;
+      case 'Cut': {
+        yield this.markCut(subst);
+        return;
       }
     }
   }
@@ -160,7 +189,10 @@ export class Executor {
       }
       if (!currentSubst) continue;
 
-      yield* this.evaluateGoals(freshRule.body, currentSubst);
+      for await (const result of this.evaluateGoals(freshRule.body, currentSubst)) {
+        yield result;
+        if (this.hasCut(result)) return;
+      }
     }
   }
 
@@ -172,17 +204,9 @@ export class Executor {
         case 'Variable':
           return { ...t, name: `${t.name}${suffix}` };
         case 'List':
-          return {
-            type: 'List',
-            elements: t.elements.map(renameTerm),
-            tail: t.tail ? renameTerm(t.tail) : t.tail,
-          };
+          return { type: 'List', elements: t.elements.map(renameTerm), tail: t.tail ? renameTerm(t.tail) : t.tail };
         case 'CompoundTerm':
           return { type: 'CompoundTerm', functor: t.functor, args: t.args.map(renameTerm) };
-        case 'BinaryExpression':
-          return { type: 'BinaryExpression', operator: t.operator, left: renameTerm(t.left), right: renameTerm(t.right) };
-        case 'UnaryExpression':
-          return { type: 'UnaryExpression', operator: t.operator, argument: renameTerm(t.argument) };
         default:
           return t;
       }
@@ -205,26 +229,19 @@ export class Executor {
         return { type: 'SemanticMatch', left: rename(cond.left), right: rename(cond.right) };
       case 'Equality':
         return { type: 'Equality', operator: cond.operator, left: rename(cond.left), right: rename(cond.right) };
-      case 'Comparison':
+      case 'Negation':
+        return { type: 'Negation', goals: cond.goals.map((g) => this.renameConditionVariables(g, rename)) };
+      case 'Disjunction':
+        return { type: 'Disjunction', left: cond.left.map((g) => this.renameConditionVariables(g, rename)), right: cond.right.map((g) => this.renameConditionVariables(g, rename)) };
+      case 'IfThenElse':
         return {
-          type: 'Comparison',
-          operator: cond.operator,
-          left: this.renameExpression(cond.left, rename),
-          right: this.renameExpression(cond.right, rename),
+          type: 'IfThenElse',
+          condition: cond.condition.map((g) => this.renameConditionVariables(g, rename)),
+          thenBranch: cond.thenBranch.map((g) => this.renameConditionVariables(g, rename)),
+          elseBranch: cond.elseBranch.map((g) => this.renameConditionVariables(g, rename)),
         };
-      case 'ArithmeticEvaluation':
-        return { type: 'ArithmeticEvaluation', target: rename(cond.target), expression: this.renameExpression(cond.expression, rename) };
-    }
-  }
-
-  private renameExpression(expr: AST.Expression, rename: (term: AST.Term) => AST.Term): AST.Expression {
-    switch (expr.type) {
-      case 'BinaryExpression':
-        return { type: 'BinaryExpression', operator: expr.operator, left: this.renameExpression(expr.left, rename), right: this.renameExpression(expr.right, rename) };
-      case 'UnaryExpression':
-        return { type: 'UnaryExpression', operator: expr.operator, argument: this.renameExpression(expr.argument, rename) };
-      default:
-        return rename(expr as AST.Term);
+      case 'Cut':
+        return { type: 'Cut' };
     }
   }
 
@@ -238,21 +255,11 @@ export class Executor {
 
   private occurs(varName: string, term: AST.Term, subst: Substitution): boolean {
     const t = this.deref(term, subst);
-    if (t.type === 'Variable') {
-      return t.name === varName;
-    }
+    if (t.type === 'Variable') return t.name === varName;
     if (t.type === 'List') {
       return t.elements.some((e) => this.occurs(varName, e, subst)) || (t.tail ? this.occurs(varName, t.tail, subst) : false);
     }
-    if (t.type === 'CompoundTerm') {
-      return t.args.some((a) => this.occurs(varName, a, subst));
-    }
-    if (t.type === 'BinaryExpression') {
-      return this.occurs(varName, t.left as AST.Term, subst) || this.occurs(varName, t.right as AST.Term, subst);
-    }
-    if (t.type === 'UnaryExpression') {
-      return this.occurs(varName, t.argument as AST.Term, subst);
-    }
+    if (t.type === 'CompoundTerm') return t.args.some((a) => this.occurs(varName, a, subst));
     return false;
   }
 
@@ -278,7 +285,6 @@ export class Executor {
 
     if (left.type === 'Atom' && right.type === 'Atom') return left.value === right.value ? subst : null;
     if (left.type === 'StringLiteral' && right.type === 'StringLiteral') return left.value === right.value ? subst : null;
-    if (left.type === 'NumberLiteral' && right.type === 'NumberLiteral') return left.value === right.value ? subst : null;
 
     if (left.type === 'List' && right.type === 'List') {
       if (left.elements.length > 0 && right.elements.length > 0) {
@@ -310,18 +316,6 @@ export class Executor {
       return current;
     }
 
-    if (left.type === 'BinaryExpression' && right.type === 'BinaryExpression') {
-      if (left.operator !== right.operator) return null;
-      const s1 = this.unify(left.left as AST.Term, right.left as AST.Term, subst);
-      if (!s1) return null;
-      return this.unify(left.right as AST.Term, right.right as AST.Term, s1);
-    }
-
-    if (left.type === 'UnaryExpression' && right.type === 'UnaryExpression') {
-      if (left.operator !== right.operator) return null;
-      return this.unify(left.argument as AST.Term, right.argument as AST.Term, subst);
-    }
-
     return null;
   }
 
@@ -334,8 +328,6 @@ export class Executor {
         return (b as AST.Atom).value === a.value;
       case 'StringLiteral':
         return (b as AST.StringLiteral).value === a.value;
-      case 'NumberLiteral':
-        return (b as AST.NumberLiteral).value === a.value;
       case 'List': {
         const lb = b as AST.List;
         if (a.elements.length !== lb.elements.length) return false;
@@ -349,14 +341,6 @@ export class Executor {
         const cb = b as AST.CompoundTerm;
         if (a.functor !== cb.functor || a.args.length !== cb.args.length) return false;
         return a.args.every((arg, i) => this.termsEqual(arg, cb.args[i]));
-      }
-      case 'BinaryExpression': {
-        const bb = b as AST.BinaryExpression;
-        return a.operator === bb.operator && this.termsEqual(a.left as AST.Term, bb.left as AST.Term) && this.termsEqual(a.right as AST.Term, bb.right as AST.Term);
-      }
-      case 'UnaryExpression': {
-        const ub = b as AST.UnaryExpression;
-        return a.operator === ub.operator && this.termsEqual(a.argument as AST.Term, ub.argument as AST.Term);
       }
       case 'FieldAccess': {
         const fb = b as AST.FieldAccess;
@@ -372,31 +356,23 @@ export class Executor {
     if (Array.isArray(value)) {
       return { type: 'List', elements: value.map((v) => ({ type: 'StringLiteral', value: v } as AST.StringLiteral)), tail: null };
     }
-    return typeof value === 'number'
-      ? ({ type: 'NumberLiteral', value } as AST.NumberLiteral)
-      : ({ type: 'StringLiteral', value: value.toString() } as AST.StringLiteral);
+    return { type: 'StringLiteral', value: value.toString() } as AST.StringLiteral;
   }
 
   private async evaluateSemanticMatch(condition: AST.SemanticMatchCondition, subst: Substitution): Promise<boolean> {
     const leftVal = await this.termToValue(this.deref(condition.left, subst), subst);
     const rightVal = await this.termToValue(this.deref(condition.right, subst), subst);
-    if (typeof leftVal === 'string' && typeof rightVal === 'string') {
-      return this.matcher.match(leftVal, rightVal);
-    }
-    if (Array.isArray(leftVal) && typeof rightVal === 'string') {
-      return this.matcher.match(leftVal, rightVal);
-    }
+    if (typeof leftVal === 'string' && typeof rightVal === 'string') return this.matcher.match(leftVal, rightVal);
+    if (Array.isArray(leftVal) && typeof rightVal === 'string') return this.matcher.match(leftVal, rightVal);
     return false;
   }
 
-  private async termToValue(term: AST.Term, subst: Substitution): Promise<string | string[] | number | null> {
+  private async termToValue(term: AST.Term, subst: Substitution): Promise<string | string[] | null> {
     const t = this.resolveField(this.deref(term, subst), subst);
     switch (t.type) {
       case 'StringLiteral':
         return t.value;
       case 'Atom':
-        return t.value;
-      case 'NumberLiteral':
         return t.value;
       case 'List':
         return t.elements.map((e) => this.termToValueSync(e, subst)).map((v) => (v === null ? '' : String(v)));
@@ -407,100 +383,37 @@ export class Executor {
     }
   }
 
-  private termToValueSync(term: AST.Term, subst: Substitution): string | number | null {
+  private termToValueSync(term: AST.Term, subst: Substitution): string | null {
     const t = this.resolveField(this.deref(term, subst), subst);
     switch (t.type) {
       case 'StringLiteral':
         return t.value;
       case 'Atom':
         return t.value;
-      case 'NumberLiteral':
-        return t.value;
       default:
         return null;
     }
   }
 
-  public async evaluateExpression(expr: AST.Expression, subst: Substitution): Promise<number> {
-    switch (expr.type) {
-      case 'NumberLiteral':
-        return expr.value;
-      case 'StringLiteral': {
-        const num = Number(expr.value);
-        if (isNaN(num)) throw new Error(`Cannot convert string to number: ${expr.value}`);
-        return num;
+  public termToString(term: AST.Term, subst: Substitution): string {
+    const t = this.deref(term, subst);
+    switch (t.type) {
+      case 'Variable':
+        return t.name;
+      case 'Atom':
+        return t.value;
+      case 'StringLiteral':
+        return `"${t.value}"`;
+      case 'List': {
+        const elements = t.elements.map((e) => this.termToString(e, subst));
+        const tail = t.tail ? `| ${this.termToString(t.tail, subst)}` : '';
+        return `[${elements.join(', ')}${tail ? ' ' + tail : ''}]`;
       }
-      case 'Atom': {
-        const num = Number(expr.value);
-        if (isNaN(num)) throw new Error(`Cannot convert atom to number: ${expr.value}`);
-        return num;
-      }
-      case 'Variable': {
-        const resolved = this.deref(expr, subst);
-        if (resolved.type === 'Variable') throw new Error(`Unbound variable ${expr.name}`);
-        return this.evaluateExpression(resolved, subst);
-      }
-      case 'FieldAccess': {
-        const resolved = this.resolveField(expr, subst);
-        return this.evaluateExpression(resolved, subst);
-      }
-      case 'UnaryExpression': {
-        const value = await this.evaluateExpression(expr.argument, subst);
-        return expr.operator === '-' ? -value : value;
-      }
-      case 'BinaryExpression': {
-        const left = await this.evaluateExpression(expr.left, subst);
-        const right = await this.evaluateExpression(expr.right, subst);
-        switch (expr.operator) {
-          case '+':
-            return left + right;
-          case '-':
-            return left - right;
-          case '*':
-            return left * right;
-          case '/':
-            return left / right;
-          case '//':
-            return Math.trunc(left / right);
-          case 'mod':
-            return left % right;
-          case '^':
-            return left ** right;
-          default:
-            throw new Error('Unknown operator');
-        }
-      }
-      case 'List':
-        return expr.elements.length;
-      case 'CompoundTerm': {
-        throw new Error('Cannot evaluate compound term as number');
-      }
-      default:
-        throw new Error('Unknown expression type');
+      case 'CompoundTerm':
+        return `${t.functor}(${t.args.map((a) => this.termToString(a, subst)).join(', ')})`;
+      case 'FieldAccess':
+        return `${t.object}.${t.field}`;
     }
-  }
-
-  private compareValues(op: AST.ComparisonCondition['operator'], left: number, right: number): boolean {
-    switch (op) {
-      case '<':
-        return left < right;
-      case '>':
-        return left > right;
-      case '=<':
-        return left <= right;
-      case '>=':
-        return left >= right;
-      case '=:=':
-        return left === right;
-      case '=\\=':
-        return left !== right;
-      default:
-        return false;
-    }
-  }
-
-  private toNumberTerm(value: number): AST.NumberLiteral {
-    return { type: 'NumberLiteral', value };
   }
 
   private outputSolution(subst: Substitution, goals: AST.Condition[]): void {
@@ -531,14 +444,7 @@ export class Executor {
         case 'CompoundTerm':
           term.args.forEach(visitTerm);
           break;
-        case 'BinaryExpression':
-          visitTerm(term.left as AST.Term);
-          visitTerm(term.right as AST.Term);
-          break;
-        case 'UnaryExpression':
-          visitTerm(term.argument as AST.Term);
-          break;
-        default:
+        case 'FieldAccess':
           break;
       }
     };
@@ -556,13 +462,19 @@ export class Executor {
           visitTerm(cond.left);
           visitTerm(cond.right);
           break;
-        case 'Comparison':
-          visitTerm(cond.left as AST.Term);
-          visitTerm(cond.right as AST.Term);
+        case 'Negation':
+          cond.goals.forEach(visitCondition);
           break;
-        case 'ArithmeticEvaluation':
-          visitTerm(cond.target);
-          visitTerm(cond.expression as AST.Term);
+        case 'Disjunction':
+          cond.left.forEach(visitCondition);
+          cond.right.forEach(visitCondition);
+          break;
+        case 'IfThenElse':
+          cond.condition.forEach(visitCondition);
+          cond.thenBranch.forEach(visitCondition);
+          cond.elseBranch.forEach(visitCondition);
+          break;
+        case 'Cut':
           break;
       }
     };
@@ -571,34 +483,7 @@ export class Executor {
     return Array.from(names);
   }
 
-  public termToString(term: AST.Term, subst: Substitution): string {
-    const t = this.deref(term, subst);
-    switch (t.type) {
-      case 'Variable':
-        return t.name;
-      case 'Atom':
-        return t.value;
-      case 'StringLiteral':
-        return `"${t.value}"`;
-      case 'NumberLiteral':
-        return String(t.value);
-      case 'List': {
-        const elements = t.elements.map((e) => this.termToString(e, subst));
-        const tail = t.tail ? `| ${this.termToString(t.tail, subst)}` : '';
-        return `[${elements.join(', ')}${tail ? ' ' + tail : ''}]`;
-      }
-      case 'CompoundTerm':
-        return `${t.functor}(${t.args.map((a) => this.termToString(a, subst)).join(', ')})`;
-      case 'FieldAccess':
-        return `${t.object}.${t.field}`;
-      case 'BinaryExpression':
-        return `${this.termToString(t.left as AST.Term, subst)} ${t.operator} ${this.termToString(t.right as AST.Term, subst)}`;
-      case 'UnaryExpression':
-        return `${t.operator}${this.termToString(t.argument as AST.Term, subst)}`;
-    }
-  }
-
-  private getFieldValue(objectName: string, fieldName: string): string | string[] | number | null {
+  private getFieldValue(objectName: string, fieldName: string): string | string[] | null {
     const concept = this.kb.concepts.get(objectName);
     if (concept) {
       if (fieldName === 'description' && concept.description) return concept.description;
@@ -620,6 +505,16 @@ export class Executor {
     }
 
     return null;
+  }
+
+  private hasCut(subst: Substitution): boolean {
+    return subst.has(CUT_MARKER);
+  }
+
+  private markCut(subst: Substitution): Substitution {
+    const next = new Map(subst);
+    next.set(CUT_MARKER, { type: 'Atom', value: '!' } as AST.Atom);
+    return next;
   }
 
   getKnowledgeBase(): KnowledgeBase {

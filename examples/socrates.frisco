@@ -22,16 +22,16 @@ entity SOCRATES: Man.
 
 # Premises leveraging multi-line clarity and flexibility
 all_men_mortal :-
-  Man.attributes ~== "limited existence due to biology".
+  Man.attributes =~= "limited existence due to biology".
 
 socrates_is_man :-
-  SOCRATES.description ~== "ancient Greek thinker who pursued truth".
+  SOCRATES.description =~= "ancient Greek thinker who pursued truth".
 
 # Derivation with flexible, clear matching
 mortal(target) :-
-  target.description ~== "philosopher from Athens",
-  Man.essentials ~== "ability to reason abstractly",
-  Man.attributes ~== "will eventually die".
+  target.description =~= "philosopher from Athens",
+  Man.essentials =~= "ability to reason abstractly",
+  Man.attributes =~= "will eventually die".
 
 # Query derives the necessary conclusion mechanically
 ? mortal(SOCRATES).

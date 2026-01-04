@@ -4,28 +4,16 @@ export enum TokenType {
   DESCRIPTION = 'DESCRIPTION',
   ATTRIBUTES = 'ATTRIBUTES',
   ESSENTIALS = 'ESSENTIALS',
-  IS = 'IS',
-  MOD = 'MOD',
 
   ASSIGN = 'ASSIGN',
   EQUAL_EQUAL = 'EQUAL_EQUAL',
   SEMANTIC_MATCH = 'SEMANTIC_MATCH',
   IMPLIES = 'IMPLIES',
-  PLUS = 'PLUS',
-  MINUS = 'MINUS',
-  STAR = 'STAR',
-  SLASH = 'SLASH',
-  INT_DIV = 'INT_DIV',
-  CARET = 'CARET',
-  LESS = 'LESS',
-  GREATER = 'GREATER',
-  LESS_EQUAL = 'LESS_EQUAL',
-  GREATER_EQUAL = 'GREATER_EQUAL',
-  EQUAL_NUM = 'EQUAL_NUM',
-  NOT_EQUAL_NUM = 'NOT_EQUAL_NUM',
-  NOT_EQUAL = 'NOT_EQUAL',
   BAR = 'BAR',
   SEMICOLON = 'SEMICOLON',
+  CUT = 'CUT',
+  IF_THEN = 'IF_THEN',
+  NEGATION = 'NEGATION',
   QUERY = 'QUERY',
   DOT = 'DOT',
   COMMA = 'COMMA',
@@ -39,10 +27,12 @@ export enum TokenType {
   IDENTIFIER = 'IDENTIFIER',
   CONSTANT = 'CONSTANT',
   STRING = 'STRING',
-  NUMBER = 'NUMBER',
 
   EOF = 'EOF',
 }
+
+
+
 
 export type Token = {
   type: TokenType;
@@ -116,20 +106,6 @@ export class Lexer {
     return result;
   }
 
-  private readNumber(): string {
-    let result = '';
-    while (this.peek() !== null && /[0-9]/.test(this.peek()!)) {
-      result += this.advance();
-    }
-    if (this.peek() === '.') {
-      result += this.advance();
-      while (this.peek() !== null && /[0-9]/.test(this.peek()!)) {
-        result += this.advance();
-      }
-    }
-    return result;
-  }
-
   private readIdentifier(): string {
     let result = '';
     while (this.peek() !== null && /[a-zA-Z0-9_]/.test(this.peek()!)) {
@@ -145,8 +121,7 @@ export class Lexer {
       description: TokenType.DESCRIPTION,
       attributes: TokenType.ATTRIBUTES,
       essentials: TokenType.ESSENTIALS,
-      is: TokenType.IS,
-      mod: TokenType.MOD,
+      not: TokenType.NEGATION,
     };
 
     if (keywords[text]) {
@@ -175,23 +150,17 @@ export class Lexer {
       const line = this.line;
       const column = this.column;
 
-      if (char !== null && /[0-9]/.test(char)) {
-        const value = this.readNumber();
-        tokens.push({ type: TokenType.NUMBER, value, line, column });
-        continue;
-      }
-
       if (char === '"') {
         const value = this.readString();
         tokens.push({ type: TokenType.STRING, value, line, column });
         continue;
       }
 
-      if (char === '~' && this.peek(1) === '=' && this.peek(2) === '=') {
+      if (char === '=' && this.peek(1) === '~' && this.peek(2) === '=') {
         this.advance();
         this.advance();
         this.advance();
-        tokens.push({ type: TokenType.SEMANTIC_MATCH, value: '~==', line, column });
+        tokens.push({ type: TokenType.SEMANTIC_MATCH, value: '=~=', line, column });
         continue;
       }
 
@@ -202,49 +171,17 @@ export class Lexer {
         continue;
       }
 
-      if (char === '=' && this.peek(1) === ':') {
-        if (this.peek(2) === '=') {
-          this.advance();
-          this.advance();
-          this.advance();
-          tokens.push({ type: TokenType.EQUAL_NUM, value: '=:=', line, column });
-          continue;
-        }
-      }
-
-      if (char === '=' && this.peek(1) === '\\' && this.peek(2) === '=') {
+      if (char === '-' && this.peek(1) === '>') {
         this.advance();
         this.advance();
-        this.advance();
-        tokens.push({ type: TokenType.NOT_EQUAL_NUM, value: '=\\=', line, column });
+        tokens.push({ type: TokenType.IF_THEN, value: '->', line, column });
         continue;
       }
 
-      if (char === '=' && this.peek(1) === '/') {
+      if (char === '\\' && this.peek(1) === '+') {
         this.advance();
         this.advance();
-        tokens.push({ type: TokenType.NOT_EQUAL, value: '=/ ', line, column });
-        continue;
-      }
-
-      if (char === '=' && this.peek(1) === '<') {
-        this.advance();
-        this.advance();
-        tokens.push({ type: TokenType.LESS_EQUAL, value: '=<', line, column });
-        continue;
-      }
-
-      if (char === '>' && this.peek(1) === '=') {
-        this.advance();
-        this.advance();
-        tokens.push({ type: TokenType.GREATER_EQUAL, value: '>=', line, column });
-        continue;
-      }
-
-      if (char === '/' && this.peek(1) === '/') {
-        this.advance();
-        this.advance();
-        tokens.push({ type: TokenType.INT_DIV, value: '//', line, column });
+        tokens.push({ type: TokenType.NEGATION, value: '\\+', line, column });
         continue;
       }
 
@@ -265,16 +202,11 @@ export class Lexer {
         ')': TokenType.RPAREN,
         '[': TokenType.LBRACKET,
         ']': TokenType.RBRACKET,
-        '+': TokenType.PLUS,
-        '-': TokenType.MINUS,
-        '*': TokenType.STAR,
-        '/': TokenType.SLASH,
-        '^': TokenType.CARET,
-        '<': TokenType.LESS,
-        '>': TokenType.GREATER,
         '|': TokenType.BAR,
         ';': TokenType.SEMICOLON,
+        '!': TokenType.CUT,
       };
+
 
       if (char && single[char]) {
         tokens.push({ type: single[char], value: char, line, column });

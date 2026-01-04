@@ -25,7 +25,7 @@ describe('Lexer', () => {
   });
 
   test('tokenizes semantic match operator', () => {
-    const source = 'Man.attributes ~== "some text"';
+    const source = 'Man.attributes =~= "some text"';
     const lexer = new Lexer(source);
     const tokens = lexer.tokenize();
 
@@ -37,7 +37,7 @@ describe('Lexer', () => {
   });
 
   test('tokenizes rule declaration', () => {
-    const source = 'mortal(target) :- target.description ~== "philosopher".';
+    const source = 'mortal(target) :- target.description =~= "philosopher".';
     const lexer = new Lexer(source);
     const tokens = lexer.tokenize();
 

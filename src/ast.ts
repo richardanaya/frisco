@@ -41,8 +41,10 @@ export type Condition =
   | SemanticMatchCondition
   | PredicateCall
   | EqualityCondition
-  | ComparisonCondition
-  | ArithmeticEvaluation;
+  | Negation
+  | Disjunction
+  | IfThenElse
+  | Cut;
 
 export type PredicateCall = {
   type: 'PredicateCall';
@@ -57,23 +59,33 @@ export type EqualityCondition = {
   right: Term;
 };
 
-export type ComparisonCondition = {
-  type: 'Comparison';
-  operator: '<' | '>' | '=<' | '>=' | '=:=' | '=\\=';
-  left: Expression;
-  right: Expression;
-};
-
-export type ArithmeticEvaluation = {
-  type: 'ArithmeticEvaluation';
-  target: Term;
-  expression: Expression;
-};
 
 export type SemanticMatchCondition = {
   type: 'SemanticMatch';
   left: Term;
   right: Term;
+};
+
+export type Negation = {
+  type: 'Negation';
+  goals: Condition[];
+};
+
+export type Disjunction = {
+  type: 'Disjunction';
+  left: Condition[];
+  right: Condition[];
+};
+
+export type IfThenElse = {
+  type: 'IfThenElse';
+  condition: Condition[];
+  thenBranch: Condition[];
+  elseBranch: Condition[];
+};
+
+export type Cut = {
+  type: 'Cut';
 };
 
 export type FieldAccess = {
@@ -85,13 +97,10 @@ export type FieldAccess = {
 export type Term =
   | Variable
   | Atom
-  | NumberLiteral
   | StringLiteral
   | List
   | CompoundTerm
-  | FieldAccess
-  | BinaryExpression
-  | UnaryExpression;
+  | FieldAccess;
 
 export type Variable = {
   type: 'Variable';
@@ -104,10 +113,6 @@ export type Atom = {
   value: string;
 };
 
-export type NumberLiteral = {
-  type: 'NumberLiteral';
-  value: number;
-};
 
 export type StringLiteral = {
   type: 'StringLiteral';
@@ -125,23 +130,6 @@ export type CompoundTerm = {
   functor: string;
   args: Term[];
 };
-
-export type BinaryExpression = {
-  type: 'BinaryExpression';
-  operator: BinaryOperator;
-  left: Expression;
-  right: Expression;
-};
-
-export type UnaryExpression = {
-  type: 'UnaryExpression';
-  operator: '-' | '+';
-  argument: Expression;
-};
-
-export type Expression = Term | BinaryExpression | UnaryExpression;
-
-export type BinaryOperator = '+' | '-' | '*' | '/' | 'mod' | '//' | '^';
 
 export type Query = {
   type: 'Query';

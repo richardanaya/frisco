@@ -44,7 +44,7 @@ describe('Parser', () => {
   test('parses rule with semantic match', () => {
     const source = `
       mortal(target) :-
-        target.description ~== "philosopher".
+        target.description =~= "philosopher".
     `;
     const lexer = new Lexer(source);
     const tokens = lexer.tokenize();
@@ -65,8 +65,8 @@ describe('Parser', () => {
   test('parses rule with multiple conditions', () => {
     const source = `
       mortal(target) :-
-        target.description ~== "philosopher",
-        Man.attributes ~== "finite".
+        target.description =~= "philosopher",
+        Man.attributes =~= "finite".
     `;
     const lexer = new Lexer(source);
     const tokens = lexer.tokenize();
@@ -100,7 +100,7 @@ describe('Parser', () => {
       entity SOCRATES: Man.
         description = "Socrates"
 
-      mortal(x) :- Man.attributes ~== "finite".
+      mortal(x) :- Man.attributes =~= "finite".
 
       ? mortal(SOCRATES).
     `;

@@ -15,7 +15,7 @@ Frisco is a logic programming language combining Prolog-style inference with Obj
 
 ### Operators
 - `=` - Assignment
-- `~==` - Semantic match (embedding-based similarity ≥ 0.7)
+- `=~=` - Semantic match (embedding-based similarity ≥ 0.7)
 - `:-` - Logical implication (rule definition)
 - `?` - Query operator
 - `.` - Field access / statement terminator
@@ -72,7 +72,7 @@ entity FIDO: Dog.
 
 **Example:**
 ```frisco
-pet(x) :- x.description ~== "friendly animal".
+pet(x) :- x.description =~= "friendly animal".
 ```
 
 ### Query
@@ -115,13 +115,6 @@ Print one or more values with a newline.
 ? println("The", "quick", "fox").  # Prints: The quick fox
 ```
 
-#### `nl()`
-Print a blank line.
-
-```frisco
-? nl().                     # Prints a newline
-```
-
 ### Using I/O in Rules
 
 Built-in predicates can be used in rule bodies for debugging or interactive reasoning:
@@ -129,7 +122,7 @@ Built-in predicates can be used in rule bodies for debugging or interactive reas
 ```frisco
 mortal(person) :-
   println("Checking:", person),
-  person.description ~== "human being",
+  person.description =~= "human being",
   println("Confirmed:", person, "is mortal").
 
 ? mortal(SOCRATES).
@@ -141,16 +134,16 @@ mortal(person) :-
 
 ## Semantic Matching
 
-The `~==` operator compares strings using embedding vectors:
+The `=~=` operator compares strings using embedding vectors:
 
 - **String vs String**: Match if cosine similarity ≥ 0.7
 - **Array vs String**: Match if ANY element has similarity ≥ 0.7
 
 ```frisco
-"dog" ~== "canine"              # True
-"dog" ~== "mathematics"          # False
-["cat", "dog"] ~== "puppy"      # True (dog ≈ puppy)
-["red", "blue"] ~== "vehicle"   # False
+"dog" =~= "canine"              # True
+"dog" =~= "mathematics"          # False
+["cat", "dog"] =~= "puppy"      # True (dog ≈ puppy)
+["red", "blue"] =~= "vehicle"   # False
 ```
 
 ## Field Access
@@ -182,7 +175,7 @@ concept Bird.
 entity SPARROW: Bird.
   description = "small bird"
 
-can_fly(x) :- Bird.attributes ~== "able to fly".
+can_fly(x) :- Bird.attributes =~= "able to fly".
 
 ? can_fly(SPARROW).
 # Output: True
@@ -201,8 +194,8 @@ entity LION: Mammal.
   description = "large cat"
 
 predator(x) :-
-  x.description ~== "large feline",
-  Carnivore.essentials ~== "meat eater".
+  x.description =~= "large feline",
+  Carnivore.essentials =~= "meat eater".
 
 ? predator(LION).
 # Output: True
@@ -222,8 +215,8 @@ entity ARISTOTLE: Man.
   description = "Greek philosopher"
 
 mortal(x) :-
-  Man.essentials ~== "rational faculty",
-  x.description ~== "philosopher".
+  Man.essentials =~= "rational faculty",
+  x.description =~= "philosopher".
 
 ? mortal(ARISTOTLE).
 # Output: True
@@ -242,8 +235,8 @@ entity TOYOTA: Car.
   description = "sedan"
 
 needs_fuel(x) :-
-  x.description ~== "automobile",
-  Car.essentials ~== "engine".
+  x.description =~= "automobile",
+  Car.essentials =~= "engine".
 
 ? needs_fuel(TOYOTA).
 # Output: True
@@ -258,7 +251,7 @@ concept Plant.
 entity ROSE: Plant.
   description = "flowering plant"
 
-can_run(x) :- x.description ~== "animal with legs".
+can_run(x) :- x.description =~= "animal with legs".
 
 ? can_run(ROSE).
 # Output: False
@@ -275,7 +268,7 @@ concept Language.
   ]
 
 structured(x) :-
-  Language.attributes ~== "organized system with rules".
+  Language.attributes =~= "organized system with rules".
 
 ? structured(Language).
 # Output: True (matches "grammar rules")
@@ -293,7 +286,7 @@ entity CIRCLE: Shape.
 entity SQUARE: Shape.
   description = "four-sided shape"
 
-has_sides(x) :- x.description ~== "polygon".
+has_sides(x) :- x.description =~= "polygon".
 
 ? has_sides(CIRCLE).  # False
 ? has_sides(SQUARE).  # True
@@ -316,7 +309,7 @@ concept Greeting.
 entity HELLO: Greeting.
   description = "Hello, World"
 
-is_greeting(x) :- x.description ~== "salutation".
+is_greeting(x) :- x.description =~= "salutation".
 
 ? is_greeting(HELLO).
 ```
@@ -359,14 +352,14 @@ Entities inherit concept properties and can add their own description.
 
 ## 4. Semantic Matching
 
-The `~==` operator is Frisco's superpower:
+The `=~=` operator is Frisco's superpower:
 
 ```frisco
 # Exact words not needed - meaning matters
-"dog" ~== "canine"           # True
-"happy" ~== "joyful"         # True
-"car" ~== "vehicle"          # True
-"tree" ~== "software"        # False
+"dog" =~= "canine"           # True
+"happy" =~= "joyful"         # True
+"car" =~= "vehicle"          # True
+"tree" =~= "software"        # False
 ```
 
 Arrays match if ANY element is similar:
@@ -376,7 +369,7 @@ concept Fruit.
   attributes = ["apple", "banana", "orange"]
 
 # This matches "banana" in the array
-Fruit.attributes ~== "tropical fruit"  # True
+Fruit.attributes =~= "tropical fruit"  # True
 ```
 
 ## 5. Field Access
@@ -414,7 +407,7 @@ Example:
 concept Tree.
   attributes = ["trunk", "leaves", "roots"]
 
-alive(x) :- Tree.attributes ~== "living organism parts".
+alive(x) :- Tree.attributes =~= "living organism parts".
 ```
 
 ## 7. Multiple Conditions
@@ -429,9 +422,9 @@ concept Pet.
   attributes = ["domesticated", "friendly"]
 
 good_pet(x) :-
-  x.description ~== "animal companion",
-  Mammal.attributes ~== "produces milk",
-  Pet.attributes ~== "tame".
+  x.description =~= "animal companion",
+  Mammal.attributes =~= "produces milk",
+  Pet.attributes =~= "tame".
 ```
 
 All conditions must be true for the rule to succeed.
@@ -447,7 +440,7 @@ entity DOG: Animal.
 entity ROCK: Mineral.
   description = "hard stone"
 
-living(thing) :- thing.description ~== "alive".
+living(thing) :- thing.description =~= "alive".
 
 ? living(DOG).   # True, thing=DOG
 ? living(ROCK).  # False
@@ -466,7 +459,7 @@ Queries ask questions:
 Output is either `True` or `False`, with variable bindings:
 
 ```frisco
-mortal(x) :- Man.attributes ~== "finite".
+mortal(x) :- Man.attributes =~= "finite".
 
 ? mortal(SOCRATES).
 # Output:
@@ -497,7 +490,7 @@ entity WHEEL: Circle.
 entity BOX: Square.
   description = "cubic container"
 
-has_corners(x) :- x.description ~== "angular shape".
+has_corners(x) :- x.description =~= "angular shape".
 
 ? has_corners(WHEEL).  # False
 ? has_corners(BOX).    # True
@@ -519,8 +512,8 @@ entity SOCRATES: Man.
   description = "Socrates"
 
 mortal(person) :-
-  person.description ~== "human",
-  Man.attributes ~== "will die".
+  person.description =~= "human",
+  Man.attributes =~= "will die".
 
 ? mortal(SOCRATES).
 # True - Socrates is mortal
@@ -548,8 +541,8 @@ Frisco has built-in predicates for printing to the terminal:
 #         True
 
 # Blank line
-? nl().
-# Output: (blank line)
+? println("").
+# Output: 
 #         True
 ```
 
@@ -567,10 +560,10 @@ entity ARISTOTLE: Man.
 check_mortal(person) :-
   println("Analyzing:", person),
   print("  Is philosopher? "),
-  person.description ~== "thinker",
+  person.description =~= "thinker",
   println("Yes!"),
   print("  Has mortality? "),
-  Man.attributes ~== "will die",
+  Man.attributes =~= "will die",
   println("Yes!"),
   println("Conclusion:", person, "is mortal").
 
@@ -601,9 +594,9 @@ concept Action.
   attributes = ["voluntary", "deliberate"]
 
 just_action(x) :-
-  Action.attributes ~== "intentional deed",
-  Justice.essentials ~== "respects individual rights",
-  x.description ~== "moral choice".
+  Action.attributes =~= "intentional deed",
+  Justice.essentials =~= "respects individual rights",
+  x.description =~= "moral choice".
 
 entity HONESTY: Action.
   description = "truthful behavior"
@@ -634,8 +627,8 @@ entity HUMAN: Primate.
   description = "homo sapiens"
 
 intelligent(x) :-
-  Primate.attributes ~== "advanced cognition",
-  x.description ~== "reasoning being".
+  Primate.attributes =~= "advanced cognition",
+  x.description =~= "reasoning being".
 
 ? intelligent(HUMAN).
 # True
@@ -655,7 +648,7 @@ entity PENGUIN: Bird.
 entity EAGLE: Bird.
   description = "soaring raptor"
 
-can_fly(x) :- x.description ~== "flying animal".
+can_fly(x) :- x.description =~= "flying animal".
 
 ? can_fly(EAGLE).    # True
 ? can_fly(PENGUIN).  # False
@@ -677,10 +670,10 @@ concept Courage.
   essentials = ["facing_fear", "acting_rightly"]
 
 virtuous_action(act) :-
-  act.description ~== "brave deed",
-  Courage.essentials ~== "overcoming danger",
-  Rationality.attributes ~== "reasoned choice",
-  Virtue.essentials ~== "excellence of character".
+  act.description =~= "brave deed",
+  Courage.essentials =~= "overcoming danger",
+  Rationality.attributes =~= "reasoned choice",
+  Virtue.essentials =~= "excellence of character".
 
 entity RESCUE: Courage.
   description = "saving someone from danger"
@@ -727,7 +720,7 @@ concept Triangle.
 
 ```frisco
 # Try different phrasings to see what matches
-test_match(x) :- x.description ~== "your test phrase".
+test_match(x) :- x.description =~= "your test phrase".
 ```
 
 ## 18. Common Patterns
@@ -736,23 +729,23 @@ test_match(x) :- x.description ~== "your test phrase".
 
 ```frisco
 is_type(entity, type) :-
-  type.essentials ~== "defining characteristic",
-  entity.description ~== "instance description".
+  type.essentials =~= "defining characteristic",
+  entity.description =~= "instance description".
 ```
 
 **Pattern 2: Property Testing**
 
 ```frisco
 has_property(x, prop) :-
-  x.description ~== prop.
+  x.description =~= prop.
 ```
 
 **Pattern 3: Classification**
 
 ```frisco
 classify(x, category) :-
-  category.attributes ~== "characteristic",
-  x.description ~== "matching description".
+  category.attributes =~= "characteristic",
+  x.description =~= "matching description".
 ```
 
 ## 19. Next Steps
@@ -781,8 +774,8 @@ entity LISP: Functional.
   description = "parenthesized prefix notation"
 
 expressive(x) :-
-  Functional.attributes ~== "powerful abstraction",
-  x.description ~== "homoiconic language".
+  Functional.attributes =~= "powerful abstraction",
+  x.description =~= "homoiconic language".
 
 ? expressive(LISP).
 ```

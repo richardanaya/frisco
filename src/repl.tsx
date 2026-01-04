@@ -122,7 +122,6 @@ const Repl: React.FC<ReplProps> = () => {
       return;
     }
 
-    // If waiting for input (read_line), resolve the promise
     if (waitingForInput && inputResolver) {
       setHistory(prev => [...prev, `> ${value}`]);
       inputResolver(trimmed);
@@ -223,8 +222,7 @@ const Repl: React.FC<ReplProps> = () => {
           chalk.bold('Built-in Predicates:'),
           '  println(X)    - Print X with newline',
           '  print(X)      - Print X without newline',
-          '  read_line(X)  - Read input and bind to variable X',
-          '  nl            - Print a newline',
+          '  readln(X)     - Read input and bind to variable X',
           '',
         ]);
         break;

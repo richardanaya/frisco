@@ -30,11 +30,7 @@ const builtinTable: Record<string, BuiltinHandler> = {
     exec.getOutputHandler()(rendered);
     yield subst;
   },
-  nl: async function* (_args, subst, exec) {
-    exec.getOutputHandler()('');
-    yield subst;
-  },
-  read_line: async function* (args, subst, exec) {
+  readln: async function* (args, subst, exec) {
     if (args.length !== 1) return;
     const target = exec.deref(args[0], subst);
     if (target.type !== 'Variable') return;
@@ -43,6 +39,7 @@ const builtinTable: Record<string, BuiltinHandler> = {
     next.set(target.name, { type: 'StringLiteral', value: input });
     yield next;
   },
+
   member: async function* (args, subst, exec) {
     if (args.length !== 2) return;
     const item = args[0];
@@ -63,24 +60,6 @@ const builtinTable: Record<string, BuiltinHandler> = {
       if (unified) yield unified;
     }
   },
-  length: async function* (args, subst, exec) {
-    if (args.length !== 2) return;
-    const listTerm = exec.deref(args[0], subst);
-    if (listTerm.type !== 'List') return;
-    const len = listTerm.elements.length;
-    const unified = exec.unify(args[1], { type: 'NumberLiteral', value: len }, subst);
-    if (unified) yield unified;
-  },
-  nth: async function* (args, subst, exec) {
-    if (args.length !== 3) return;
-    const indexTerm = exec.deref(args[0], subst);
-    const listTerm = exec.deref(args[1], subst);
-    if (indexTerm.type !== 'NumberLiteral' || listTerm.type !== 'List') return;
-    const idx = indexTerm.value - 1;
-    if (idx < 0 || idx >= listTerm.elements.length) return;
-    const unified = exec.unify(args[2], listTerm.elements[idx], subst);
-    if (unified) yield unified;
-  },
   reverse: async function* (args, subst, exec) {
     if (args.length !== 2) return;
     const listTerm = exec.deref(args[0], subst);
@@ -89,7 +68,28 @@ const builtinTable: Record<string, BuiltinHandler> = {
     const unified = exec.unify(args[1], reversed, subst);
     if (unified) yield unified;
   },
+  is_list: async function* (args, subst, exec) {
+    if (args.length !== 1) return;
+    const t = exec.deref(args[0], subst);
+    if (t.type === 'List') yield subst;
+  },
+  is_unbound: async function* (args, subst, exec) {
+    if (args.length !== 1) return;
+    const t = exec.deref(args[0], subst);
+    if (t.type === 'Variable') yield subst;
+  },
+  is_bound: async function* (args, subst, exec) {
+    if (args.length !== 1) return;
+    const t = exec.deref(args[0], subst);
+    if (t.type !== 'Variable') yield subst;
+  },
+  is_atom: async function* (args, subst, exec) {
+    if (args.length !== 1) return;
+    const t = exec.deref(args[0], subst);
+    if (t.type === 'Atom' || t.type === 'StringLiteral') yield subst;
+  },
   findall: async function* (args, subst, exec) {
+
     if (args.length !== 3) return;
     const [template, goalTerm, listVar] = args;
     const goalCondition = termToGoal(goalTerm);
@@ -100,9 +100,6 @@ const builtinTable: Record<string, BuiltinHandler> = {
     const list: AST.List = { type: 'List', elements: results, tail: null };
     const unified = exec.unify(listVar, list, subst);
     if (unified) yield unified;
-  },
-  bagof: async function* (args, subst, exec) {
-    yield* builtinTable.findall(args, subst, exec);
   },
   setof: async function* (args, subst, exec) {
     if (args.length !== 3) return;

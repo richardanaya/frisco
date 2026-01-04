@@ -15,20 +15,20 @@ entity PLATO: Man.
 mortal(person) :-
   println("Analyzing:", person),
   print("  Checking if", person, "is a philosopher..."),
-  person.description ~== "philosopher",
+  person.description =~= "philosopher",
   println("Yes!"),
   print("  Checking if Man has finite lifespan..."),
-  Man.attributes ~== "will die eventually",
+  Man.attributes =~= "will die eventually",
   println("Yes!"),
   println("Conclusion:", person, "is mortal.").
 
 # Test reasoning with output
 ? println("=== Starting Philosophical Reasoning ===").
-? nl().
+? println("").
 
 ? mortal(SOCRATES).
 
-? nl().
+? println("").
 ? println("---").
 
 ? mortal(PLATO).

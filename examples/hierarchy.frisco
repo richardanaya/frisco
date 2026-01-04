@@ -31,10 +31,10 @@ entity PLATO: Man
 
 # Semantic matching with genus
 has_genus_creature(X) :-
-  X.genus ~== "creature".
+  X.genus =~= "creature".
 
 belongs_to_human_concept(E) :-
-  E.concept ~== "human".
+  E.concept =~= "human".
 
 ? has_genus_creature(Man).
 ? belongs_to_human_concept(SOCRATES).

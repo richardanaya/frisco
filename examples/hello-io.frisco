@@ -14,7 +14,7 @@ greet(name) :-
 # Rule that shows computation and prints result
 is_mortal(x) :-
   println("Checking if", x, "is mortal..."),
-  x.description ~== "living being",
+  x.description =~= "living being",
   println("Yes,", x, "is mortal!").
 
 # Test the greeting

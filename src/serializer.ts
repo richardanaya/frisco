@@ -58,13 +58,19 @@ export class Serializer {
       case 'PredicateCall':
         return `${cond.name}(${cond.arguments.map((a) => this.termToSource(a)).join(', ')})`;
       case 'SemanticMatch':
-        return `${this.termToSource(cond.left)} ~== ${this.termToSource(cond.right)}`;
+        return `${this.termToSource(cond.left)} =~= ${this.termToSource(cond.right)}`;
       case 'Equality':
         return `${this.termToSource(cond.left)} ${cond.operator} ${this.termToSource(cond.right)}`;
-      case 'Comparison':
-        return `${this.termToSource(cond.left as AST.Term)} ${cond.operator} ${this.termToSource(cond.right as AST.Term)}`;
-      case 'ArithmeticEvaluation':
-        return `${this.termToSource(cond.target)} is ${this.termToSource(cond.expression as AST.Term)}`;
+      case 'Negation':
+        return `not(${cond.goals.map((g) => this.conditionToSource(g)).join(', ')})`;
+      case 'Disjunction':
+        return `${cond.left.map((g) => this.conditionToSource(g)).join(', ')} ; ${cond.right.map((g) => this.conditionToSource(g)).join(', ')}`;
+      case 'IfThenElse':
+        return `${cond.condition.map((g) => this.conditionToSource(g)).join(', ')} -> ${cond.thenBranch.map((g) => this.conditionToSource(g)).join(', ')}${cond.elseBranch.length ? ' ; ' + cond.elseBranch.map((g) => this.conditionToSource(g)).join(', ') : ''}`;
+      case 'Cut':
+        return '!';
+      default:
+        return '';
     }
   }
 
@@ -76,8 +82,6 @@ export class Serializer {
         return term.value;
       case 'StringLiteral':
         return `"${term.value}"`;
-      case 'NumberLiteral':
-        return String(term.value);
       case 'FieldAccess':
         return `${term.object}.${term.field}`;
       case 'List': {
@@ -87,10 +91,6 @@ export class Serializer {
       }
       case 'CompoundTerm':
         return `${term.functor}(${term.args.map((a) => this.termToSource(a)).join(', ')})`;
-      case 'BinaryExpression':
-        return `${this.termToSource(term.left as AST.Term)} ${term.operator} ${this.termToSource(term.right as AST.Term)}`;
-      case 'UnaryExpression':
-        return `${term.operator}${this.termToSource(term.argument as AST.Term)}`;
     }
   }
 

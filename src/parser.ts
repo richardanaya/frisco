@@ -116,7 +116,7 @@ export class Parser {
   private parseRuleDeclaration(): AST.RuleDeclaration {
     const head = this.parsePredicateHead();
     this.expect(TokenType.IMPLIES);
-    const body = this.parseConditionList();
+    const body = this.parseGoalBody();
     this.match(TokenType.DOT);
     return { type: 'RuleDeclaration', head, body };
   }
@@ -138,103 +138,82 @@ export class Parser {
 
   private parseQuery(): AST.Query {
     this.expect(TokenType.QUERY);
-    const body = this.parseConditionList();
+    const body = this.parseGoalBody();
     this.match(TokenType.DOT);
     return { type: 'Query', body };
   }
 
-  private parseConditionList(): AST.Condition[] {
-    const conditions: AST.Condition[] = [];
-    conditions.push(this.parseCondition());
-    while (this.match(TokenType.COMMA)) {
-      conditions.push(this.parseCondition());
-    }
-    return conditions;
+  private parseGoalBody(): AST.Condition[] {
+    return this.parseDisjunction();
   }
 
-  private parseCondition(): AST.Condition {
+  private parseDisjunction(): AST.Condition[] {
+    let branches: AST.Condition[][] = [this.parseIfThenElse()];
+    while (this.match(TokenType.SEMICOLON)) {
+      branches.push(this.parseIfThenElse());
+    }
+    if (branches.length === 1) return branches[0];
+    let acc: AST.Condition[] = branches[0];
+    for (let i = 1; i < branches.length; i++) {
+      acc = [{ type: 'Disjunction', left: acc, right: branches[i] } as AST.Condition];
+    }
+    return acc;
+  }
+
+  private parseIfThenElse(): AST.Condition[] {
+    const condSeq = this.parseConjunction();
+    if (this.match(TokenType.IF_THEN)) {
+      const thenSeq = this.parseConjunction();
+      let elseSeq: AST.Condition[] = [];
+      if (this.match(TokenType.SEMICOLON)) {
+        elseSeq = this.parseConjunction();
+      }
+      return [{ type: 'IfThenElse', condition: condSeq, thenBranch: thenSeq, elseBranch: elseSeq } as AST.Condition];
+    }
+    return condSeq;
+  }
+
+  private parseConjunction(): AST.Condition[] {
+    const seq: AST.Condition[] = [];
+    seq.push(this.parseAtomicCondition());
+    while (this.match(TokenType.COMMA)) {
+      seq.push(this.parseAtomicCondition());
+    }
+    return seq;
+  }
+
+  private parseAtomicCondition(): AST.Condition {
+    if (this.match(TokenType.CUT)) return { type: 'Cut' };
+
+    if (this.match(TokenType.NEGATION)) {
+      const goals = this.parseAtomicCondition();
+      return { type: 'Negation', goals: [goals] };
+    }
+
     if (this.check(TokenType.IDENTIFIER) && this.peek(1).type === TokenType.LPAREN) {
       return this.parsePredicateCall();
     }
 
-    const leftExpr = this.parseExpression();
+    const leftTerm = this.parseTerm();
 
     if (this.match(TokenType.SEMANTIC_MATCH)) {
-      const right = this.parseExpression();
-      return {
-        type: 'SemanticMatch',
-        left: this.expressionToTerm(leftExpr),
-        right: this.expressionToTerm(right),
-      };
-    }
-
-    if (this.match(TokenType.IS)) {
-      const expr = this.parseExpression();
-      return {
-        type: 'ArithmeticEvaluation',
-        target: this.expressionToTerm(leftExpr),
-        expression: expr,
-      };
+      const right = this.parseTerm();
+      return { type: 'SemanticMatch', left: leftTerm, right };
     }
 
     const equalityToken = this.match(TokenType.EQUAL_EQUAL) || this.match(TokenType.ASSIGN);
     if (equalityToken) {
-      const right = this.parseExpression();
+      const right = this.parseTerm();
       return {
         type: 'Equality',
         operator: equalityToken.type === TokenType.EQUAL_EQUAL ? '==' : '=',
-        left: this.expressionToTerm(leftExpr),
-        right: this.expressionToTerm(right),
-      };
-    }
-
-    const comparisonToken =
-      this.match(TokenType.LESS) ||
-      this.match(TokenType.GREATER) ||
-      this.match(TokenType.LESS_EQUAL) ||
-      this.match(TokenType.GREATER_EQUAL) ||
-      this.match(TokenType.EQUAL_NUM) ||
-      this.match(TokenType.NOT_EQUAL_NUM);
-
-    if (comparisonToken) {
-      const right = this.parseExpression();
-      let operator: AST.ComparisonCondition['operator'];
-      switch (comparisonToken.type) {
-        case TokenType.LESS:
-          operator = '<';
-          break;
-        case TokenType.GREATER:
-          operator = '>';
-          break;
-        case TokenType.LESS_EQUAL:
-          operator = '=<';
-          break;
-        case TokenType.GREATER_EQUAL:
-          operator = '>=';
-          break;
-        case TokenType.EQUAL_NUM:
-          operator = '=:=';
-          break;
-        case TokenType.NOT_EQUAL_NUM:
-          operator = '=\\=';
-          break;
-        default:
-          throw new Error('Unknown comparison operator');
-      }
-      return {
-        type: 'Comparison',
-        operator,
-        left: leftExpr,
+        left: leftTerm,
         right,
       };
     }
 
-    if (leftExpr.type === 'CompoundTerm') {
-      return {
-        type: 'PredicateCall',
-        name: leftExpr.functor,
-        arguments: leftExpr.args,
-      };
+    if (leftTerm.type === 'CompoundTerm') {
+      return { type: 'PredicateCall', name: leftTerm.functor, arguments: leftTerm.args };
     }
 
     throw new Error(`Unexpected condition at line ${this.peek().line}`);
@@ -254,66 +233,11 @@ export class Parser {
     return { type: 'PredicateCall', name, arguments: args };
   }
 
-  private parseExpression(): AST.Expression {
-    return this.parseAdditive();
-  }
-
-  private parseAdditive(): AST.Expression {
-    let expr = this.parseMultiplicative();
-    while (true) {
-      if (this.match(TokenType.PLUS)) {
-        expr = { type: 'BinaryExpression', operator: '+', left: expr, right: this.parseMultiplicative() };
-      } else if (this.match(TokenType.MINUS)) {
-        expr = { type: 'BinaryExpression', operator: '-', left: expr, right: this.parseMultiplicative() };
-      } else {
-        break;
-      }
-    }
-    return expr;
-  }
-
-  private parseMultiplicative(): AST.Expression {
-    let expr = this.parseExponent();
-    while (true) {
-      if (this.match(TokenType.STAR)) {
-        expr = { type: 'BinaryExpression', operator: '*', left: expr, right: this.parseExponent() };
-      } else if (this.match(TokenType.SLASH)) {
-        expr = { type: 'BinaryExpression', operator: '/', left: expr, right: this.parseExponent() };
-      } else if (this.match(TokenType.INT_DIV)) {
-        expr = { type: 'BinaryExpression', operator: '//', left: expr, right: this.parseExponent() };
-      } else if (this.match(TokenType.MOD)) {
-        expr = { type: 'BinaryExpression', operator: 'mod', left: expr, right: this.parseExponent() };
-      } else {
-        break;
-      }
-    }
-    return expr;
-  }
-
-  private parseExponent(): AST.Expression {
-    let expr = this.parseUnary();
-    while (this.match(TokenType.CARET)) {
-      expr = { type: 'BinaryExpression', operator: '^', left: expr, right: this.parseUnary() };
-    }
-    return expr;
-  }
-
-  private parseUnary(): AST.Expression {
-    if (this.match(TokenType.MINUS)) {
-      return { type: 'UnaryExpression', operator: '-', argument: this.parseUnary() };
-    }
-    if (this.match(TokenType.PLUS)) {
-      return { type: 'UnaryExpression', operator: '+', argument: this.parseUnary() };
-    }
+  private parseExpression(): AST.Term {
     return this.parsePrimary();
   }
 
-  private parsePrimary(): AST.Expression {
-    if (this.check(TokenType.NUMBER)) {
-      const value = Number(this.advance().value);
-      return { type: 'NumberLiteral', value };
-    }
-
+  private parsePrimary(): AST.Term {
     if (this.check(TokenType.STRING)) {
       const value = this.advance().value;
       return { type: 'StringLiteral', value };
@@ -369,11 +293,7 @@ export class Parser {
   }
 
   private parseTerm(): AST.Term {
-    return this.expressionToTerm(this.parseExpression());
-  }
-
-  private expressionToTerm(expr: AST.Expression): AST.Term {
-    return expr as AST.Term;
+    return this.parseExpression();
   }
 
   private parseList(): AST.List {

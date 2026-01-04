@@ -19,7 +19,7 @@
 
 ## 🎯 What is Frisco?
 
-Frisco is a **logic programming language** that enables precise reasoning about concepts and relationships using semantic similarity. It combines Prolog-style inference with Objectivist epistemology and modern embedding vectors to create a system where philosophical arguments, scientific classifications, and logical proofs can be computed mechanically.
+Frisco is a **logic programming language** focused on argument and ontology analysis: precise reasoning about concepts, relations, and semantic similarity. It combines Prolog-style inference with Objectivist epistemology and embedding-based semantic matching to compute philosophical arguments, scientific classifications, and logical proofs.
 
 ```frisco
 concept Man.
@@ -31,8 +31,8 @@ entity SOCRATES: Man.
   description = "Socrates"
 
 mortal(x) :-
-  x.description ~== "philosopher from Athens",
-  Man.attributes ~== "will eventually die".
+  x.description =~= "philosopher from Athens",
+  Man.attributes =~= "will eventually die".
 
 ? mortal(SOCRATES).
 # True
@@ -72,17 +72,17 @@ concept Triangle.
 
 Human concepts are not rigid symbol-matching systems — we recognize that "canine" and "dog" refer to the same entity despite different words. Frisco bridges symbolic logic and perceptual cognition using **embedding vectors**:
 
-- **Semantic matching (`~==`)**: Compares meaning, not just strings
+- **Semantic matching (`=~=`)**: Compares meaning, not just strings
 - **Cosine similarity**: Measures conceptual closeness in vector space
 - **Threshold-based matching**: Similarity ≥ 0.7 is considered a match
 
 This allows flexible reasoning:
 ```frisco
-Man.attributes ~== "will eventually die"
+Man.attributes =~= "will eventually die"
 # Matches "finite lifespan" or "mortal being" without exact text
 ```
 
-The `~==` operator embodies the Objectivist insight that concepts integrate similar perceptual concretes — embeddings capture this integration mathematically.
+The `=~=` operator embodies the Objectivist insight that concepts integrate similar perceptual concretes — embeddings capture this integration mathematically.
 
 ---
 
@@ -92,7 +92,7 @@ The `~==` operator embodies the Objectivist insight that concepts integrate simi
 Define abstract ideas with descriptions, attributes, and essentials — mirroring human conceptual hierarchies.
 
 ### 🔍 **Semantic Matching**
-The revolutionary `~==` operator uses embedding vectors (via [FastEmbed](https://github.com/xenova/fastembed)) to match meaning, not syntax.
+The revolutionary `=~=` operator uses embedding vectors (via [FastEmbed](https://github.com/xenova/fastembed)) to match meaning, not syntax.
 
 ### ⚡ **Logic Programming**
 Prolog-style rules and queries with unification, backtracking, and variable binding.
@@ -163,7 +163,7 @@ concept Greeting.
 entity HELLO: Greeting.
   description = "Hello, World!"
 
-friendly(x) :- x.description ~== "warm welcome".
+friendly(x) :- x.description =~= "warm welcome".
 
 ? friendly(HELLO).
 ```
@@ -204,8 +204,8 @@ Define logical relationships:
 
 ```frisco
 pet(x) :-
-  x.description ~== "domesticated animal",
-  Dog.attributes ~== "friendly".
+  x.description =~= "domesticated animal",
+  Dog.attributes =~= "friendly".
 ```
 
 ### Queries
@@ -218,14 +218,14 @@ Ask questions:
 
 ### Semantic Matching
 
-The `~==` operator compares conceptual similarity:
+The `=~=` operator compares conceptual similarity:
 
 | Expression | Result | Reason |
 |------------|--------|--------|
-| `"dog" ~== "canine"` | ✅ True | Semantically similar |
-| `"happy" ~== "joyful"` | ✅ True | Synonymous |
-| `"cat" ~== "mathematics"` | ❌ False | Unrelated |
-| `["red", "blue"] ~== "crimson"` | ✅ True | Matches "red" |
+| `"dog" =~= "canine"` | ✅ True | Semantically similar |
+| `"happy" =~= "joyful"` | ✅ True | Synonymous |
+| `"cat" =~= "mathematics"` | ❌ False | Unrelated |
+| `["red", "blue"] =~= "crimson"` | ✅ True | Matches "red" |
 
 ---
 
@@ -295,7 +295,7 @@ npm test
 concept Virtue.
   essentials = ["moral_excellence", "good_character"]
 
-virtuous(x) :- x.description ~== "morally praiseworthy act".
+virtuous(x) :- x.description =~= "morally praiseworthy act".
 ```
 
 ### Science

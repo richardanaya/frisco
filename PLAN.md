@@ -6,7 +6,7 @@ Frisco is currently a **semantic knowledge base query system** with fuzzy matchi
 
 **Current State:**
 - ✅ Concept/entity ontology with hierarchies
-- ✅ Semantic matching via embeddings (~==)
+- ✅ Semantic matching via embeddings (=~=)
 - ✅ Simple rules with single-solution evaluation
 - ✅ Basic I/O predicates
 - ✅ Variable assignments
@@ -32,7 +32,7 @@ Frisco is currently a **semantic knowledge base query system** with fuzzy matchi
 - Support compound term matching
 - Implement occurs check to prevent infinite structures
 - Enable bidirectional variable binding (X = Y where both unbound)
-- Add exact equality operator (== or =) alongside semantic match (~==)
+- Add exact equality operator (== or =) alongside semantic match (=~=)
 
 **Impact:** Enables rules like `same(X, X)` and structural pattern matching
 
@@ -232,10 +232,10 @@ first([H|_], H).
 **Needed:** Type inspection predicates
 
 **Implementation:**
-- `var(X)` - check if unbound variable
-- `nonvar(X)` - check if bound
-- `atom(X)` - check if atom
-- `number(X)` - check if number
+- `is_unbound(X)` - check if unbound variable
+- `is_bound(X)` - check if bound
+- `is_atom(X)` - check if atom/string
+- `is_number(X)` - check if number
 - `is_list(X)` - check if list
 - `concept(X)` - check if concept (Frisco-specific)
 - `entity(X)` - check if entity (Frisco-specific)
@@ -331,7 +331,7 @@ abs(X, Result) :- (X >= 0 -> Result = X ; Result is -X).
 ### 1. Semantic Matching (KEEP AND ENHANCE)
 
 **Current Implementation:**
-- ~== operator with embedding vectors
+- =~= operator with embedding vectors
 - 0.7 threshold cosine similarity
 - BGE-Small-EN-V1.5 model
 
@@ -349,7 +349,7 @@ abs(X, Result) :- (X >= 0 -> Result = X ; Result is -X).
 True
 
 # Semantic match (fuzzy)
-? Man.genus ~== "creature".
+? Man.genus =~= "creature".
 True
 
 # Explicit threshold
@@ -438,7 +438,7 @@ False  # Only 0.75 similar
 
 ### Built-ins
 - Create `src/builtins.ts` - Centralize all built-in predicates
-- Move print/println/nl/read_line here
+- Move print/println/readln here
 - Add arithmetic, list, string, type-checking predicates
 
 ### Testing
@@ -453,7 +453,7 @@ False  # Only 0.75 similar
 
 **Decision:** Support BOTH operators
 - `==` or `=` for exact equality (standard Prolog)
-- `~==` for semantic matching (Frisco's innovation)
+- `=~=` for semantic matching (Frisco's innovation)
 
 **Rationale:** Users need exact matching for deterministic logic and semantic matching for fuzzy reasoning.
 
@@ -489,7 +489,7 @@ False  # Only 0.75 similar
 **Decision:** Keep Frisco syntax, extend with Prolog features
 - Periods remain optional (Frisco style)
 - Support both concept/entity declarations AND standard facts
-- Keep ~== alongside == for semantic/exact matching
+- Keep =~= alongside == for semantic/exact matching
 - Keep field access syntax (Entity.field)
 
 **Rationale:** Preserve Frisco's ergonomics while adding Prolog power.

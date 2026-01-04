@@ -41,7 +41,7 @@ describe('Executor', () => {
 
   test('stores rules in knowledge base', async () => {
     const source = `
-      mortal(x) :- Man.attributes ~== "finite".
+      mortal(x) :- Man.attributes =~= "finite".
     `;
     const lexer = new Lexer(source);
     const parser = new Parser(lexer.tokenize());
@@ -65,8 +65,8 @@ describe('Executor', () => {
         description = "ancient philosopher"
 
       mortal(target) :-
-        target.description ~== "philosopher",
-        Man.attributes ~== "will die eventually".
+        target.description =~= "philosopher",
+        Man.attributes =~= "will die eventually".
 
       ? mortal(SOCRATES).
     `;
@@ -97,7 +97,7 @@ describe('Executor', () => {
       entity JOHN: Person.
         description = "a person"
 
-      thinking(x) :- x.description ~== "human being".
+      thinking(x) :- x.description =~= "human being".
 
       ? thinking(JOHN).
     `;

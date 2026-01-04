@@ -26,6 +26,8 @@
                     <li><a href="#unification" class="nav-link">Unification & Equality</a></li>
                     <li><a href="#operators" class="nav-link">Equality & Comparison Cheatsheet</a></li>
                     <li><a href="#operators-why" class="nav-link">Why So Many Operators?</a></li>
+                    <li><a href="#types" class="nav-link">Terms & Types</a></li>
+                    <li><a href="#control" class="nav-link">Negation, Cut, Control</a></li>
                     <li><a href="#lists" class="nav-link">Lists & Pattern Matching</a></li>
                     <li><a href="#arithmetic" class="nav-link">Arithmetic & Comparisons</a></li>
                     <li><a href="#solutions" class="nav-link">Multiple Solutions</a></li>
@@ -79,11 +81,11 @@
                     You can also use <code>print</code> for output without a newline:
                 </p>
                 <pre><code class="language-frisco">print("Hello, ")
-print("World!")
-nl</code></pre>
+ println("World!")</code></pre>
                 <p>
-                    The <code>nl</code> predicate prints a newline character.
+                    Use <code>println</code> to end with a newline, or <code>print</code> to continue on the same line.
                 </p>
+
             </section>
 
             <!-- Concepts -->
@@ -185,9 +187,9 @@ entity ROME: City
                 <p>
                     Queries can also test semantic matches and rules:
                 </p>
-                <pre><code class="language-frisco">? SOCRATES.description ~== "thinker"</code></pre>
+                <pre><code class="language-frisco">? SOCRATES.description =~= "thinker"</code></pre>
                 <p>
-                    The <code>~==</code> operator performs semantic matching, which we'll
+                    The <code>=~=</code> operator performs semantic matching, which we'll
                     explore in detail later.
                 </p>
             </section>
@@ -202,15 +204,14 @@ entity ROME: City
                 <ul>
                     <li><code>println(X)</code> - Print with newline</li>
                     <li><code>print(X)</code> - Print without newline</li>
-                    <li><code>nl</code> - Print newline</li>
-                    <li><code>read_line(X)</code> - Read user input into variable X</li>
+                    <li><code>readln(X)</code> - Read user input into variable X</li>
                 </ul>
                 <h3>Using Predicates</h3>
                 <pre><code class="language-frisco">println("What is your name?")
-read_line(Name)
+readln(Name)
 print("Hello, ")
 print(Name)
-nl</code></pre>
+println("")</code></pre>
                 <p>
                     Variables in Frisco start with uppercase letters, following Prolog
                     conventions.
@@ -225,7 +226,7 @@ nl</code></pre>
                     from existing facts.
                 </p>
                 <pre><code class="language-frisco">mortal(X) :-
-  X.type ~== "Man"</code></pre>
+  X.type =~= "Man"</code></pre>
                 <p>
                     This rule states: "X is mortal if X's type semantically matches 'Man'".
                 </p>
@@ -233,8 +234,8 @@ nl</code></pre>
                     Rules can have multiple conditions:
                 </p>
                 <pre><code class="language-frisco">philosopher(X) :-
-  X.description ~== "philosopher",
-  X.type ~== "Man"</code></pre>
+  X.description =~= "philosopher",
+  X.type =~= "Man"</code></pre>
                 <p>
                     The comma <code>,</code> represents logical AND. All conditions must be
                     satisfied for the rule to succeed.
@@ -247,7 +248,7 @@ entity SOCRATES: Man
   description = "philosopher"
 
 mortal(X) :-
-  X.type ~== "Man"
+  X.type =~= "Man"
 
 ? mortal(SOCRATES)</code></pre>
             </section>
@@ -304,7 +305,7 @@ True</code></pre>
                 <p>
                     Variables can also be bound dynamically using predicates:
                 </p>
-                <pre><code class="language-frisco">read_line(Input)
+                <pre><code class="language-frisco">readln(Input)
 println(Input)</code></pre>
                 <h3>Variables in Rules</h3>
                 <p>
@@ -312,8 +313,7 @@ println(Input)</code></pre>
                 </p>
                 <pre><code class="language-frisco">greet(Name) :-
   print("Hello, "),
-  print(Name),
-  nl
+  println(Name)
 
 ? greet("Aristotle")</code></pre>
                 <p>
@@ -360,7 +360,7 @@ False</code></pre>
                     <li><code>==</code>: Structural equality test (no binding)</li>
                     <li><code>is</code>: Evaluate arithmetic on the right, then unify left with the numeric result</li>
                     <li><code>=:=</code> / <code>=\=</code>: Numeric equality/inequality tests (no binding)</li>
-                    <li><code>~==</code>: Semantic match using embeddings (strings/lists)</li>
+                    <li><code>=~=</code>: Semantic match using embeddings (strings/lists)</li>
                 </ul>
                 <pre><code class="language-frisco">% Unify
 ? X = [1,2,3].
@@ -383,7 +383,7 @@ True
 True
 
 % Semantic match
-? "canine" ~== "dog".
+? "canine" =~= "dog".
 True</code></pre>
             </section>
 
@@ -399,7 +399,7 @@ True</code></pre>
                     <li><strong>Structural test</strong> (<code>==</code>) checks shapes without binding, useful in guards.</li>
                     <li><strong>Arithmetic eval</strong> (<code>is</code>) runs computations; separating it avoids implicit math during logic unification.</li>
                     <li><strong>Numeric comparisons</strong> (<code>=:=</code>, <code>=\=</code>) compare evaluated numbers without binding.</li>
-                    <li><strong>Semantic match</strong> (<code>~==</code>) is Frisco-specific and fuzzy; keeping it separate preserves deterministic equality.</li>
+                    <li><strong>Semantic match</strong> (<code>=~=</code>) is Frisco-specific and fuzzy; keeping it separate preserves deterministic equality.</li>
                 </ul>
                 <p>
                     This split lets the engine stay declarative and backtracking-safe, while arithmetic and semantic
@@ -407,6 +407,39 @@ True</code></pre>
                     side effects that survive when the engine rewinds choice points: bindings and checks can be undone
                     cleanly, so exploring alternate solutions stays consistent.
                 </p>
+            </section>
+
+            <section id="types" class="lesson">
+                <h2>Terms & Types</h2>
+                <p>Frisco terms are similar to Prolog terms:</p>
+                <ul>
+                    <li><strong>Atoms</strong>: lowercase identifiers or quoted strings (<code>man</code>, <code>"dog"</code>), immutable symbols.</li>
+                    <li><strong>Numbers</strong>: integers/floats (<code>42</code>, <code>3.14</code>).</li>
+                    <li><strong>Variables</strong>: names (any case) that can bind during unification; anonymous <code>_</code> is always fresh.</li>
+                    <li><strong>Lists</strong>: <code>[a, b, c]</code> and head/tail <code>[H|T]</code>.</li>
+                    <li><strong>Compound terms</strong>: functor + args, e.g., <code>likes(socrates, philosophy)</code>.</li>
+                    <li><strong>Field access</strong>: <code>Entity.field</code> for KB lookups.</li>
+                </ul>
+                <p>Use type predicates to test: <code>atom/1</code>, <code>number/1</code>, <code>is_list/1</code>, <code>var/1</code>, <code>nonvar/1</code>.</p>
+            </section>
+
+            <section id="control" class="lesson">
+                <h2>Negation, Cut, and Control</h2>
+                <p>
+                    Control operators steer backtracking: negation succeeds on failure, disjunction explores branches,
+                    if-then-else commits to a branch, and cut prunes choice points to keep execution deterministic.
+                </p>
+                <ul>
+                    <li><code>not(Goal)</code> or <code>\+ Goal</code>: negation as failure (succeeds when <code>Goal</code> fails).</li>
+                    <li><code>Goal1 ; Goal2</code>: disjunction (OR). Tries left, then right.</li>
+                    <li><code>Cond -> Then ; Else</code>: if-then-else; <code>Else</code> is optional.</li>
+                    <li><code>!</code>: cut; commits to the current choice, pruning alternatives to the left.</li>
+                </ul>
+                <pre><code class="language-frisco">mortal(X) :- man(X), !, not(immortal(X)).
+
+maybe_philosopher(X) :- scholar(X) ; writer(X).
+
+sign(X) :- X > 0 -> println("positive") ; println("non-positive").</code></pre>
             </section>
 
             <section id="lists" class="lesson">
@@ -480,48 +513,149 @@ True</code></pre>
 
             <section id="builtins" class="lesson">
                 <h2>Built-ins Reference</h2>
-                <p>
-                    Core built-ins available in the language runtime.
-                </p>
+                <p>Each built-in with its behavior and a quick example. Frisco is optimized for argument and ontology analysis, not numeric computation.</p>
                 <h3>I/O</h3>
                 <ul>
-                    <li><code>println(X, ...)</code> — print arguments with newline</li>
-                    <li><code>print(X, ...)</code> — print arguments without newline</li>
-                    <li><code>nl</code> — print newline</li>
-                    <li><code>read_line(Var)</code> — read a line of input and bind to <code>Var</code></li>
+                    <li><code>println(X, ...)</code> — render arguments and print with newline.</li>
+                    <li><code>print(X, ...)</code> — render arguments without newline.</li>
+                    <li><code>readln(Var)</code> — read one line from stdin into <code>Var</code> (string).</li>
                 </ul>
+                <details>
+                  <summary>Examples</summary>
+                  <pre><code class="language-frisco">? print("Hello"), print(" "), println("world").
+Hello world
+True
+
+? readln(Name), println(Name).
+Alice
+Alice
+True</code></pre>
+                </details>
+
                 <h3>Lists</h3>
                 <ul>
-                    <li><code>member(Element, List)</code></li>
-                    <li><code>append(A, B, Result)</code></li>
-                    <li><code>length(List, N)</code></li>
-                    <li><code>nth(N, List, Element)</code> (1-based)</li>
-                    <li><code>reverse(List, Reversed)</code></li>
+                    <li><code>member(Element, List)</code> — succeeds or generates elements.</li>
+                    <li><code>append(A, B, Result)</code> — concatenate or split.</li>
+                    <li><code>length(List, N)</code> — length of list.</li>
+                    <li><code>nth(N, List, Element)</code> — 1-based access.</li>
+                    <li><code>reverse(List, Reversed)</code> — reverse a list.</li>
                 </ul>
+                <details>
+                  <summary>Examples</summary>
+                  <pre><code class="language-frisco">? member(X, [a, b, c]).
+Bindings:
+  X = a
+  X = b
+  X = c
+True
+
+? append([1,2], [3,4], R).
+Bindings:
+  R = [1, 2, 3, 4]
+True
+
+? length([x,y,z], N).
+Bindings:
+  N = 3
+True
+
+? nth(2, [10,20,30], X).
+Bindings:
+  X = 20
+True
+
+? reverse([1,2,3], R).
+Bindings:
+  R = [3, 2, 1]
+True</code></pre>
+                </details>
+
                 <h3>Arithmetic and comparisons</h3>
                 <ul>
-                    <li><code>is</code> evaluates expressions: <code>X is 3 + 4 * 2</code></li>
-                    <li>Comparators: <code>&lt;</code>, <code>&gt;</code>, <code>=&lt;</code>, <code>&gt;=</code>, <code>=:=</code>, <code>=\=</code></li>
+                    <li><code>is</code> — evaluate right-hand expression, bind left.</li>
+                    <li><code>&lt;</code>, <code>&gt;</code>, <code>=&lt;</code>, <code>&gt;=</code>, <code>=:=</code>, <code>=\=</code> — numeric tests only.</li>
+                    <li><code>=~=</code> — semantic match (fuzzy string/list comparison via embeddings).</li>
                 </ul>
+                <details>
+                  <summary>Examples</summary>
+                  <pre><code class="language-frisco">? Sum is 3 + 4 * 2.
+Bindings:
+  Sum = 11
+True
+
+? 7 =:= 3 + 4.
+True
+
+? 5 =\= 2 * 3.
+True
+
+? "canine" =~= "dog".
+True</code></pre>
+                </details>
+
+                <h3>Type predicates</h3>
+                <ul>
+                    <li><code>is_unbound(X)</code> — succeeds if <code>X</code> is an unbound variable.</li>
+                    <li><code>is_bound(X)</code> — succeeds if <code>X</code> is not a free variable.</li>
+                    <li><code>is_atom(X)</code> — succeeds for atoms or string literals.</li>
+                    <li><code>is_number(X)</code> — succeeds for numeric literals.</li>
+                    <li><code>is_list(X)</code> — succeeds for lists.</li>
+                    <li>Anonymous <code>_</code> is always fresh and unbound.</li>
+                </ul>
+                <details>
+                  <summary>Examples</summary>
+                  <pre><code class="language-frisco">? is_unbound(X).
+True
+
+? X = foo, is_bound(X).
+Bindings:
+  X = foo
+True
+
+? is_atom("dog").
+True
+
+? is_number(42).
+True
+
+? is_list([1,2,3]).
+True</code></pre>
+                </details>
+
                 <h3>Solutions</h3>
                 <ul>
-                    <li><code>findall(Template, Goal, List)</code></li>
-                    <li><code>bagof(Template, Goal, List)</code></li>
-                    <li><code>setof(Template, Goal, List)</code></li>
+                    <li><code>findall(Template, Goal, List)</code> — collect all solutions of <code>Goal</code> for <code>Template</code> into <code>List</code> (returns <code>[]</code> if none).</li>
+                    <li><code>setof(Template, Goal, List)</code> — collect like <code>findall</code> but remove duplicates (first-seen order here).</li>
                 </ul>
-                <h3>Semantic</h3>
-                <ul>
-                    <li><code>~==</code> operator for semantic matching between terms</li>
-                </ul>
+                <details>
+                  <summary>Examples</summary>
+                  <pre><code class="language-frisco">likes(socrates, olives).
+likes(plato, olives).
+likes(plato, olives).  % duplicate
+
+% All solutions (duplicates kept)
+? findall(X, likes(X, olives), L).
+Bindings:
+  L = [socrates, plato, plato]
+True
+
+% Deduplicated collection
+? setof(X, likes(X, olives), L).
+Bindings:
+  L = [socrates, plato]
+True</code></pre>
+                </details>
+
             </section>
+
 
             <section id="semantic" class="lesson">
                 <h2>Semantic Matching</h2>
                 <p>
                     One of Frisco's unique features is semantic matching using the
-                    <code>~==</code> operator.
+                    <code>=~=</code> operator.
                 </p>
-                <pre><code class="language-frisco">? SOCRATES.description ~== "thinker"</code></pre>
+                <pre><code class="language-frisco">? SOCRATES.description =~= "thinker"</code></pre>
                 <p>
                     This uses embedding models to determine if two phrases are semantically
                     similar, even if they use different words.
@@ -544,7 +678,7 @@ entity DOG: Animal
   description = "loyal companion"
 
 friendly(X) :-
-  X.description ~== "friendly pet"
+  X.description =~= "friendly pet"
 
 ? friendly(DOG)  # True - "loyal companion" is similar to "friendly pet"</code></pre>
             </section>
@@ -553,12 +687,12 @@ friendly(X) :-
             <section id="interactive" class="lesson">
                 <h2>Interactive Programs</h2>
                 <p>
-                    Frisco supports interactive programs using <code>read_line</code> for
+                    Frisco supports interactive programs using <code>readln</code> for
                     user input.
                 </p>
                 <pre><code class="language-frisco">greet_user :-
   println("What is your name?"),
-  read_line(Name),
+  readln(Name),
   print("Hello, "),
   print(Name),
   println("!"),
@@ -570,8 +704,8 @@ friendly(X) :-
                 </p>
                 <pre><code class="language-frisco">quiz :-
   println("What is the capital of Greece?"),
-  read_line(Answer),
-  Answer.value ~== "Athens",
+  readline(Answer),
+  Answer.value =~= "Athens",
   println("Correct!")
 
 ? quiz</code></pre>
