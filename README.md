@@ -21,6 +21,21 @@
 
 Frisco is a **logic programming language** focused on argument and ontology analysis: precise reasoning about concepts, relations, and semantic similarity. It combines Prolog-style inference with Objectivist epistemology and embedding-based semantic matching to compute philosophical arguments, scientific classifications, and logical proofs.
 
+### Project goal
+
+- Match the essential functionality of the first Prolog release (unification, backtracking over Horn clauses, lists/compound terms, cut, disjunction, negation) while omitting arithmetic.
+- Provide tools for argument/ontology analysis aligned with Ayn Rand’s epistemology: concepts defined by genus/differentia and essentials, semantic similarity as a proxy for measurement omission, and structured reasoning over attributes/entities.
+
+### How this supports argument/ontology analysis
+
+- **Concept/ontology scaffolding:** Concepts, entities, attributes, essentials, and field access let you model genus/differentia and per-entity descriptors.
+- **Unification & backtracking:** Core Prolog-style search over Horn clauses enables inference chains for arguments.
+- **Semantic similarity (`=~=`):** Embedding-based fuzzy matching of strings/lists approximates measurement omission—treating close descriptors as equivalent when exact magnitudes are omitted.
+- **Dimensional similarity (`similar_attr/3`):** Per-attribute semantic comparison (e.g., color, material) scoped by a dimension, to compare descriptors without numeric metrics.
+- **Logical control:** Cut, disjunction, negation-as-failure, if-then-else allow disciplined search control for structured argument evaluation.
+- **Collections:** `findall/3`, `setof/3` (dedup) to gather supporting facts/solutions for argument assembly.
+- **Type guards:** `is_atom/1`, `is_list/1`, `is_bound/1`, `is_unbound/1` to keep reasoning paths well-formed.
+
 ```frisco
 concept Man.
   description = "rational animal"
