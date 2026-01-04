@@ -30,6 +30,7 @@
                     <li><a href="#control" class="nav-link">Negation, Cut, Control</a></li>
                     <li><a href="#lists" class="nav-link">Lists & Pattern Matching</a></li>
                     <li><a href="#semantic-comparison" class="nav-link">Semantic Comparison</a></li>
+                    <li><a href="#argument" class="nav-link">Argument Walkthrough</a></li>
                     <li><a href="#solutions" class="nav-link">Multiple Solutions</a></li>
                     <li class="section-title">Advanced</li>
                     <li><a href="#builtins" class="nav-link">Built-ins Reference</a></li>
@@ -45,24 +46,22 @@
             <section id="welcome" class="lesson active">
                 <h2>Welcome to Frisco</h2>
                 <p>
-                    Frisco is a logic programming language inspired by Prolog, built on
-                    Objectivist epistemology and enhanced with semantic matching capabilities.
+                    Frisco is a logic programming language inspired by Prolog, focused on argument and ontology analysis.
+                    It keeps the earliest Prolog essentials (unification, backtracking, Horn clauses, cut/negation) and
+                    adds semantic similarity to model measurement omission in Objectivist terms.
                 </p>
                 <p>
-                    This tour will guide you through the fundamentals of Frisco, from basic
-                    concepts to advanced semantic reasoning.
+                    This tour walks step by step from concepts and entities to semantic comparison and a full argument
+                    walkthrough, showing how to build and query a small ontology.
                 </p>
                 <h3>What You'll Learn</h3>
                 <ul>
-                    <li>How to define concepts and entities</li>
-                    <li>Writing queries and predicates</li>
-                    <li>Creating logical rules</li>
-                    <li>Using semantic matching for fuzzy reasoning</li>
-                    <li>Building interactive programs</li>
+                    <li>How to define concepts and entities (genus/differentia, essentials)</li>
+                    <li>Writing queries, predicates, and rules with unification/backtracking</li>
+                    <li>Controlling search with cut, negation, disjunction, if-then-else</li>
+                    <li>Applying semantic comparison (`=~=` and `similar_attr/3`) as measurement omission</li>
+                    <li>Collecting evidence with findall/setof and assembling arguments</li>
                 </ul>
-                <p>
-                    Click "Hello, World" in the sidebar to begin!
-                </p>
             </section>
 
             <!-- Hello World -->
@@ -74,285 +73,82 @@
                 </p>
                 <pre><code class="language-frisco">println("Hello, World!")</code></pre>
                 <p>
-                    Notice that Frisco doesn't require periods at the end of statements. The
-                    newline is sufficient!
+                    Frisco doesn't require periods at the end of statements.
                 </p>
                 <p>
                     You can also use <code>print</code> for output without a newline:
                 </p>
                 <pre><code class="language-frisco">print("Hello, ")
- println("World!")</code></pre>
-                <p>
-                    Use <code>println</code> to end with a newline, or <code>print</code> to continue on the same line.
-                </p>
-
+println("World!")</code></pre>
             </section>
 
             <!-- Concepts -->
             <section id="concepts" class="lesson">
                 <h2>Concepts</h2>
                 <p>
-                    In Frisco, concepts are the fundamental units of knowledge. They represent
-                    categories or types of things in your domain.
-                </p>
-                <pre><code class="language-frisco">concept Man
-  description = "rational animal"</code></pre>
-                <p>
-                    Concepts can have optional attributes and essentials:
+                    Concepts represent categories in your ontology.
                 </p>
                 <pre><code class="language-frisco">concept Person
-  description = "human being"
-  attributes = [
-    "name",
-    "age",
-    "occupation"
-  ]
+  description = "rational animal"
+  attributes = ["occupation", "origin"]
   essentials = [rational, mortal]</code></pre>
-                <p>
-                    The <code>description</code> provides semantic meaning, while
-                    <code>attributes</code> and <code>essentials</code> define the
-                    structure and necessary characteristics.
-                </p>
                 <h3>Concept Hierarchies</h3>
-                <p>
-                    Concepts can inherit from parent concepts using the <code>genus</code>
-                    (parent concept) syntax:
-                </p>
-                <pre><code class="language-frisco">concept Animal
-  description = "living organism"
-
-concept Mammal: Animal
-  description = "warm-blooded vertebrate"
-
-concept Man: Mammal
-  description = "rational animal"</code></pre>
-                <p>
-                    Access the parent concept using the <code>.genus</code> property:
-                </p>
-                <pre><code class="language-frisco">? println(Man.genus).    # Outputs: Mammal
-? println(Mammal.genus). # Outputs: Animal</code></pre>
+                <pre><code class="language-frisco">concept Philosopher: Person
+  description = "lover of wisdom"</code></pre>
             </section>
 
             <!-- Entities -->
             <section id="entities" class="lesson">
                 <h2>Entities</h2>
-                <p>
-                    Entities are specific instances of concepts. They represent concrete
-                    things in your knowledge base.
-                </p>
-                <pre><code class="language-frisco">entity SOCRATES: Man
-  description = "philosopher"</code></pre>
-                <p>
-                    Once defined, you can reference entities in queries and predicates:
-                </p>
-                <pre><code class="language-frisco">println(SOCRATES)</code></pre>
-                <p>
-                    Entity names are typically written in UPPERCASE to distinguish them
-                    from variables and concepts.
-                </p>
-                <h3>Accessing Entity Properties</h3>
-                <p>
-                    You can access an entity's concept using the <code>.concept</code> property:
-                </p>
-                <pre><code class="language-frisco">entity SOCRATES: Man
-  description = "philosopher"
-
-? println(SOCRATES.concept). # Outputs: Man</code></pre>
-                <p>
-                    This is useful for reasoning about the types of entities in your knowledge base.
-                </p>
-                <pre><code class="language-frisco">concept City
-  description = "large human settlement"
-
-entity ATHENS: City
-  description = "capital of Greece"
-
-entity ROME: City
-  description = "eternal city"</code></pre>
+                <p>Entities are instances of concepts.</p>
+                <pre><code class="language-frisco">entity SOCRATES: Philosopher
+  description = "ancient Greek philosopher"
+  origin = "Athens"
+  occupation = "teacher"</code></pre>
             </section>
 
             <!-- Queries -->
             <section id="queries" class="lesson">
                 <h2>Queries</h2>
-                <p>
-                    Queries in Frisco begin with a question mark <code>?</code> and allow
-                    you to execute predicates or test conditions.
-                </p>
-                <pre><code class="language-frisco">? println("Testing queries")</code></pre>
-                <p>
-                    In the REPL, the <code>?</code> is automatically added if you don't
-                    include it, so you can simply type:
-                </p>
-                <pre><code class="language-frisco">println("This works too!")</code></pre>
-                <p>
-                    Queries can also test semantic matches and rules:
-                </p>
-                <pre><code class="language-frisco">? SOCRATES.description =~= "thinker"</code></pre>
-                <p>
-                    The <code>=~=</code> operator performs semantic matching, which we'll
-                    explore in detail later.
-                </p>
+                <p>Use <code>?</code> to ask about the knowledge base.</p>
+                <pre><code class="language-frisco">? Philosopher.attributes
+? SOCRATES.description</code></pre>
             </section>
 
             <!-- Predicates -->
             <section id="predicates" class="lesson">
                 <h2>Predicates</h2>
-                <p>
-                    Predicates are the building blocks of logic in Frisco. Built-in predicates
-                    include:
-                </p>
-                <ul>
-                    <li><code>println(X)</code> - Print with newline</li>
-                    <li><code>print(X)</code> - Print without newline</li>
-                    <li><code>readln(X)</code> - Read user input into variable X</li>
-                </ul>
-                <h3>Using Predicates</h3>
-                <pre><code class="language-frisco">println("What is your name?")
-readln(Name)
-print("Hello, ")
-print(Name)
-println("")</code></pre>
-                <p>
-                    Variables in Frisco start with uppercase letters, following Prolog
-                    conventions.
-                </p>
+                <p>Predicates describe relationships or properties.</p>
+                <pre><code class="language-frisco">teacher(X) :- X.occupation =~= "teacher".</code></pre>
             </section>
 
             <!-- Rules -->
             <section id="rules" class="lesson">
                 <h2>Rules</h2>
-                <p>
-                    Rules define logical relationships and allow you to create new knowledge
-                    from existing facts.
-                </p>
-                <pre><code class="language-frisco">mortal(X) :-
-  X.type =~= "Man"</code></pre>
-                <p>
-                    This rule states: "X is mortal if X's type semantically matches 'Man'".
-                </p>
-                <p>
-                    Rules can have multiple conditions:
-                </p>
-                <pre><code class="language-frisco">philosopher(X) :-
-  X.description =~= "philosopher",
-  X.type =~= "Man"</code></pre>
-                <p>
-                    The comma <code>,</code> represents logical AND. All conditions must be
-                    satisfied for the rule to succeed.
-                </p>
-                <h3>Example: Classical Logic</h3>
-                <pre><code class="language-frisco">concept Man
-  description = "rational animal"
-
-entity SOCRATES: Man
-  description = "philosopher"
-
-mortal(X) :-
-  X.type =~= "Man"
-
-? mortal(SOCRATES)</code></pre>
+                <p>Create Horn clauses to derive new facts.</p>
+                <pre><code class="language-frisco">wise(X) :- Philosopher(X), X.description =~= "philosopher".</code></pre>
             </section>
 
             <!-- Variables -->
             <section id="variables" class="lesson">
                 <h2>Variables</h2>
-                <p>
-                    Variables in Frisco begin with uppercase letters and can be assigned
-                    values or bound during execution.
-                </p>
-                <h3>Manual Variable Assignment</h3>
-                <p>
-                    You can assign values to variables directly using the <code>=</code> operator.
-                    This is useful for storing values that you want to reuse across multiple queries.
-                </p>
-                <pre><code class="language-frisco">Name = "Socrates"
-Greeting = "Hello"
-
-? print(Greeting).
-? print(", ").
-? println(Name).</code></pre>
-                <p>
-                    Once assigned, variables persist throughout your session and can be used
-                    in any query.
-                </p>
-                <h4>Practical Examples</h4>
-                <p>
-                    Variables can store any value - strings, entity names, or even field access results:
-                </p>
-                <pre><code class="language-frisco"># Store configuration values
-MaxAttempts = "3"
-DefaultGreeting = "Welcome"
-
-# Store entity references
-CurrentUser = "SOCRATES"
-CurrentCity = "ATHENS"
-
-# Use in queries
-? println(CurrentUser).
-? println(DefaultGreeting).</code></pre>
-                <p>
-                    In the REPL, you can set variables interactively without the <code>?</code> prefix:
-                </p>
-                <pre><code class="language-frisco">frisco> Name = "Aristotle"
-frisco> println(Name)
-Aristotle
-True</code></pre>
-                <p>
-                    <strong>Note:</strong> Variable names must start with an uppercase letter to
-                    distinguish them from predicates and lowercase identifiers.
-                </p>
-                <h3>Variable Binding</h3>
-                <p>
-                    Variables can also be bound dynamically using predicates:
-                </p>
-                <pre><code class="language-frisco">readln(Input)
-println(Input)</code></pre>
-                <h3>Variables in Rules</h3>
-                <p>
-                    Variables are used in rules to create general patterns:
-                </p>
-                <pre><code class="language-frisco">greet(Name) :-
-  print("Hello, "),
-  println(Name)
-
-? greet("Aristotle")</code></pre>
-                <p>
-                    When a rule executes, variables are unified (matched and bound) with
-                    values. This is the core mechanism of logic programming.
-                </p>
+                <p>Variables start with uppercase; <code>_</code> is anonymous.</p>
+                <pre><code class="language-frisco">? wise(X).</code></pre>
             </section>
 
+            <!-- Unification & Equality -->
             <section id="unification" class="lesson">
                 <h2>Unification & Equality</h2>
-                <p>
-                    Unification is how Frisco (and Prolog) makes two terms structurally identical by finding variable
-                    bindings that satisfy both sides. It is bidirectional: variables can bind to atoms, numbers, lists,
-                    or other variables. An occurs check prevents a variable from being unified with a term that
-                    contains itself, avoiding infinite structures.
-                </p>
-                <p>
-                    Use <code>=</code> to unify (and bind) variables, and <code>==</code> for exact structural equality
-                    checks without binding.
-                </p>
-                <pre><code class="language-frisco">% Bind X to SOCRATES
-? X = SOCRATES.
+                <pre><code class="language-frisco">? X = SOCRATES.
 Bindings:
   X = SOCRATES
 True
 
-% Exact equality without binding
 ? SOCRATES == SOCRATES.
-True
-
-% Occurs check prevents infinite terms
-? X = [1 | X].
-False</code></pre>
-                <p>
-                    Use lowercase or uppercase variable names; anonymous variables are written as <code>_</code> when you
-                    do not care about the binding.
-                </p>
+True</code></pre>
             </section>
 
+            <!-- Operators Cheatsheet -->
             <section id="operators" class="lesson">
                 <h2>Equality & Comparison Cheatsheet</h2>
                 <ul>
@@ -361,89 +157,68 @@ False</code></pre>
                     <li><code>=~=</code>: Semantic match using embeddings (strings/lists)</li>
                     <li><code>similar_attr(Dim, A, B)</code>: Semantic comparison scoped to a dimension</li>
                 </ul>
-                <pre><code class="language-frisco">% Unify
-? X = [a,b].
+                <pre><code class="language-frisco">? X = [a,b].
 Bindings:
   X = [a, b]
 True
 
-% Structural equality
 ? [red, blue] == [red, blue].
 True
 
-% Semantic match
 ? "canine" =~= "dog".
 True
 
-% Dimensional semantic match
 ? similar_attr(color, "deep crimson", "dark red").
 True</code></pre>
             </section>
 
+            <!-- Why Operators -->
             <section id="operators-why" class="lesson">
                 <h2>Why So Many Operators?</h2>
-                <p>
-                    Frisco inherits Prolog’s separation of concerns: unification is the core inference mechanism, while
-                    arithmetic is an explicit side channel. Keeping operators distinct prevents ambiguity between
-                    binding vs. testing vs. evaluating.
-                </p>
+                <p>Frisco separates structural unification from semantic similarity.</p>
                 <ul>
-                    <li><strong>Unification</strong> (<code>=</code>) is logic-level: it binds variables to any term and drives backtracking.</li>
-                    <li><strong>Structural test</strong> (<code>==</code>) checks shapes without binding, useful in guards.</li>
-                    <li><strong>Semantic match</strong> (<code>=~=</code>) is fuzzy; keeping it separate preserves deterministic equality for <code>=</code>/<code>==</code>.</li>
-                    <li><strong>Dimensional semantic</strong> (<code>similar_attr/3</code>) scopes similarity to a specific attribute dimension.</li>
+                    <li><strong>Unification</strong> (<code>=</code>) binds terms and drives backtracking.</li>
+                    <li><strong>Structural test</strong> (<code>==</code>) checks shapes without binding.</li>
+                    <li><strong>Semantic match</strong> (<code>=~=</code>) is fuzzy; <strong>Dimensional semantic</strong> (<code>similar_attr/3</code>) scopes fuzziness by attribute.</li>
                 </ul>
-                <p>
-                    This split lets the engine stay declarative and backtracking-safe, while arithmetic and semantic
-                    reasoning remain explicit and predictable. “Backtracking-safe” means computations have no hidden
-                    side effects that survive when the engine rewinds choice points: bindings and checks can be undone
-                    cleanly, so exploring alternate solutions stays consistent.
-                </p>
+                <p>This keeps search declarative and backtracking-safe.</p>
             </section>
 
+            <!-- Terms & Types -->
             <section id="types" class="lesson">
                 <h2>Terms & Types</h2>
-                <p>Frisco terms are similar to Prolog terms:</p>
                 <ul>
-                    <li><strong>Atoms</strong>: lowercase identifiers or quoted strings (<code>man</code>, <code>"dog"</code>), immutable symbols.</li>
-                    <li><strong>Numbers</strong>: integers/floats (<code>42</code>, <code>3.14</code>).</li>
-                    <li><strong>Variables</strong>: names (any case) that can bind during unification; anonymous <code>_</code> is always fresh.</li>
-                    <li><strong>Lists</strong>: <code>[a, b, c]</code> and head/tail <code>[H|T]</code>.</li>
-                    <li><strong>Compound terms</strong>: functor + args, e.g., <code>likes(socrates, philosophy)</code>.</li>
+                    <li><strong>Atoms</strong>: lowercase identifiers or quoted strings.</li>
+                    <li><strong>Variables</strong>: bind during unification; <code>_</code> is anonymous.</li>
+                    <li><strong>Lists</strong>: <code>[a,b,c]</code>, head/tail <code>[H|T]</code>.</li>
+                    <li><strong>Compound terms</strong>: <code>likes(socrates, philosophy)</code>.</li>
                     <li><strong>Field access</strong>: <code>Entity.field</code> for KB lookups.</li>
                 </ul>
-                <p>Use type predicates to test: <code>atom/1</code>, <code>number/1</code>, <code>is_list/1</code>, <code>var/1</code>, <code>nonvar/1</code>.</p>
+                <p>Guards: <code>is_atom/1</code>, <code>is_list/1</code>, <code>is_bound/1</code>, <code>is_unbound/1</code>.</p>
             </section>
 
+            <!-- Control -->
             <section id="control" class="lesson">
                 <h2>Negation, Cut, and Control</h2>
-                <p>
-                    Control operators steer backtracking: negation succeeds on failure, disjunction explores branches,
-                    if-then-else commits to a branch, and cut prunes choice points to keep execution deterministic.
-                </p>
+                <p>Control operators steer backtracking.</p>
                 <ul>
-                    <li><code>not(Goal)</code> or <code>\+ Goal</code>: negation as failure (succeeds when <code>Goal</code> fails).</li>
-                    <li><code>Goal1 ; Goal2</code>: disjunction (OR). Tries left, then right.</li>
-                    <li><code>Cond -> Then ; Else</code>: if-then-else; <code>Else</code> is optional.</li>
-                    <li><code>!</code>: cut; commits to the current choice, pruning alternatives to the left.</li>
+                    <li><code>not(Goal)</code> or <code>\+ Goal</code>: negation as failure.</li>
+                    <li><code>Goal1 ; Goal2</code>: disjunction.</li>
+                    <li><code>Cond -> Then ; Else</code>: if-then-else.</li>
+                    <li><code>!</code>: cut; prunes choice points.</li>
                 </ul>
-                <pre><code class="language-frisco">mortal(X) :- man(X), !, not(immortal(X)).
-
+                <pre><code class="language-frisco">mortal(X) :- person(X), !, not(immortal(X)).
 maybe_philosopher(X) :- scholar(X) ; writer(X).
-
-sign(X) :- X > 0 -> println("positive") ; println("non-positive").</code></pre>
+</code></pre>
             </section>
 
+            <!-- Lists -->
             <section id="lists" class="lesson">
                 <h2>Lists & Pattern Matching</h2>
-                <p>
-                    Lists are first-class with head/tail pattern matching. Use <code>[H|T]</code> to destructure.
-                </p>
-                <pre><code class="language-frisco">% Literals
-[a, b, c]
+                <p>Lists are first-class with head/tail pattern matching.</p>
+                <pre><code class="language-frisco">[a, b, c]
 [H|T] = [a, b, c].  % H = a, T = [b, c]
 
-% Append
 append([], L, L).
 append([H|T1], L2, [H|T3]) :- append(T1, L2, T3).
 
@@ -451,17 +226,13 @@ append([H|T1], L2, [H|T3]) :- append(T1, L2, T3).
 Bindings:
   R = [red, blue]
 True</code></pre>
-                <p>
-                    Built-ins include <code>member/2</code>, <code>append/3</code>, <code>reverse/2</code>, and <code>is_list/1</code>.
-                </p>
+                <p>Built-ins include <code>member/2</code>, <code>append/3</code>, <code>reverse/2</code>, and <code>is_list/1</code>.</p>
             </section>
 
+            <!-- Semantic Comparison -->
             <section id="semantic-comparison" class="lesson">
                 <h2>Semantic Comparison</h2>
-                <p>
-                    Frisco supports semantic similarity via embeddings. Use <code>=~=</code> for fuzzy equality and
-                    <code>similar_attr/3</code> to compare descriptors within a dimension.
-                </p>
+                <p>Use <code>=~=</code> and <code>similar_attr/3</code> to approximate measurement omission.</p>
                 <pre><code class="language-frisco">? "canine" =~= "dog".
 True
 
@@ -469,12 +240,34 @@ True
 True</code></pre>
             </section>
 
+            <!-- Argument Walkthrough -->
+            <section id="argument" class="lesson">
+                <h2>Argument Walkthrough</h2>
+                <p>A tiny ontology and claim, showing semantic matching and evidence collection.</p>
+                <pre><code class="language-frisco">concept Person.
+concept Philosopher: Person.
+  attributes = ["mortal"]
+
+entity SOCRATES: Philosopher.
+  description = "ancient Greek philosopher"
+  origin = "Athens"
+
+mortal(X) :- X.description =~= "philosopher", Philosopher.attributes =~= "mortal".
+
+? mortal(SOCRATES).
+True
+
+% Collect all supporters
+? findall(X, mortal(X), People).
+Bindings:
+  People = [SOCRATES]</code></pre>
+                <p>Extend by adding more entities and attributes; use <code>similar_attr/3</code> to compare descriptors within dimensions.</p>
+            </section>
+
+            <!-- Multiple Solutions -->
             <section id="solutions" class="lesson">
                 <h2>Multiple Solutions & Collection</h2>
-                <p>
-                    The executor now backtracks to return all solutions. Use semicolons in the REPL to explore, or use
-                    collection predicates.
-                </p>
+                <p>Backtracking explores all solutions; use findall/setof to gather them.</p>
                 <pre><code class="language-frisco">concept Person.
 entity SOCRATES: Person.
 entity PLATO: Person.
@@ -493,6 +286,7 @@ Bindings:
 True</code></pre>
             </section>
 
+            <!-- Built-ins -->
             <section id="builtins" class="lesson">
                 <h2>Built-ins Reference</h2>
                 <p>Each built-in with its behavior and a quick example. Frisco is optimized for argument and ontology analysis, not numeric computation.</p>
@@ -603,51 +397,20 @@ Bindings:
   L = [socrates, plato]
 True</code></pre>
                 </details>
-
             </section>
 
-
+            <!-- Semantic Matching -->
             <section id="semantic" class="lesson">
                 <h2>Semantic Matching</h2>
-                <p>
-                    One of Frisco's unique features is semantic matching using the
-                    <code>=~=</code> operator.
-                </p>
+                <p>One of Frisco's unique features is semantic matching using the <code>=~=</code> operator.</p>
                 <pre><code class="language-frisco">? SOCRATES.description =~= "thinker"</code></pre>
-                <p>
-                    This uses embedding models to determine if two phrases are semantically
-                    similar, even if they use different words.
-                </p>
-                <h3>How It Works</h3>
-                <p>
-                    Frisco uses the BGE-Small-EN-V1.5 embedding model to convert text into
-                    vector representations. It then calculates cosine similarity between
-                    vectors.
-                </p>
-                <p>
-                    The default threshold is 0.7, meaning a 70% similarity score is required
-                    for a match.
-                </p>
-                <h3>Practical Example</h3>
-                <pre><code class="language-frisco">concept Animal
-  description = "living creature"
-
-entity DOG: Animal
-  description = "loyal companion"
-
-friendly(X) :-
-  X.description =~= "friendly pet"
-
-? friendly(DOG)  # True - "loyal companion" is similar to "friendly pet"</code></pre>
+                <p>Uses embedding models to determine if phrases are semantically similar.</p>
             </section>
 
             <!-- Interactive Programs -->
             <section id="interactive" class="lesson">
                 <h2>Interactive Programs</h2>
-                <p>
-                    Frisco supports interactive programs using <code>readln</code> for
-                    user input.
-                </p>
+                <p>Frisco supports interactive programs using <code>readln</code> for user input.</p>
                 <pre><code class="language-frisco">greet_user :-
   println("What is your name?"),
   readln(Name),
@@ -657,29 +420,12 @@ friendly(X) :-
   println("Nice to meet you!")
 
 ? greet_user</code></pre>
-                <p>
-                    You can build more complex interactions:
-                </p>
-                <pre><code class="language-frisco">quiz :-
-  println("What is the capital of Greece?"),
-  readline(Answer),
-  Answer.value =~= "Athens",
-  println("Correct!")
-
-? quiz</code></pre>
-                <p>
-                    Semantic matching makes interactive programs more forgiving - users don't
-                    need to type exact answers!
-                </p>
             </section>
 
             <!-- Using the REPL -->
             <section id="repl" class="lesson">
                 <h2>Using the REPL</h2>
-                <p>
-                    Frisco includes a powerful REPL (Read-Eval-Print Loop) for interactive
-                    development.
-                </p>
+                <p>Frisco includes a REPL for interactive development.</p>
                 <h3>Starting the REPL</h3>
                 <pre><code class="language-bash">npm run repl</code></pre>
                 <h3>REPL Commands</h3>
@@ -691,32 +437,12 @@ friendly(X) :-
                     <li><code>:clear</code> - Clear screen</li>
                     <li><code>:quit</code> - Exit REPL</li>
                 </ul>
-                <h3>Multiline Input</h3>
-                <p>
-                    Press Enter to add new lines. Submit by:
-                </p>
-                <ul>
-                    <li>Pressing Enter twice on an empty line</li>
-                    <li>Ending your input with a period</li>
-                    <li>Starting with <code>:</code> (commands submit immediately)</li>
-                </ul>
-                <h3>Navigation</h3>
-                <ul>
-                    <li>↑/↓ - Command history (single line mode)</li>
-                    <li>Ctrl+↑/↓ - Command history (multiline mode)</li>
-                    <li>←/→ - Move cursor</li>
-                    <li>Ctrl+A/E - Jump to start/end of line</li>
-                </ul>
-                <h3>Try It!</h3>
-                <p>
-                    Open the REPL and try defining your own concepts, entities, and rules.
-                    The REPL is the best way to experiment with Frisco!
-                </p>
             </section>
         </main>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
     <script src="js/frisco-prism.js"></script>
     <script src="js/tour.js"></script>
 </body>
