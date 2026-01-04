@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "build:web": "node scripts/build-web.mjs",
-    "serve:web": "npm run build:web && npx serve dist/web",
+    "serve:web": "npm run build:web && npx serve web",
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
