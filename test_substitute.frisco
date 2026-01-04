@@ -1,0 +1,14 @@
+# Knowledge base of ingredients
+concept Butter: description = "rich dairy fat, creamy, solid at room temp", attributes = ["cooking fat", "solid texture", "dairy"].
+
+concept OliveOil: description = "liquid plant fat, fruity, heart-healthy", attributes = ["cooking fat", "liquid texture", "plant-based"].
+
+# Test substitution logic
+good_substitute(X, Y) :-
+    similar_attr(cooking_function, X.description, Y.description),
+    similar_attr(texture, X.description, Y.description).
+
+# Test queries
+? good_substitute(Butter, OliveOil).
+
+? similar_attr(cooking_function, "butter cooking", "oil cooking").

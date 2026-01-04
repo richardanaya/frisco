@@ -6,38 +6,11 @@
 # 3. Existence: The Given
 concept Man: description = "Rational animal", attributes = ["biological", "bipedal", "mammal"], essentials = ["rational_faculty", "volitional_consciousness"].
 
-entity SOCRATES: Man.
+entity SOCRATES: Man, description = "Socrates".
 
-# 4. Identity: Abstraction
-# (Already defined Man above)
+entity PLATO: Man, description = "Student of Socrates".
 
-# 5. Identification: Queries
-? println("SOCRATES.description: ", SOCRATES.description).
-
-# Unification
-? println("Found entity: ", SOCRATES).
-
-# 6. Measurement Omission
-# Semantic match
-? "furious" =~= "angry".
-? "The gadfly of Athens" =~= "ancient Greek philosopher".
-? ["crimson", "scarlet", "ruby"] =~= "red".
-
-# Dimensional Similarity
-? similar_attr(material, "Ruby", "Blood").
-? similar_attr(color, "Ruby", "Blood").
-
-# 7. Causality: Rules
-mortal(X) :- X.description =~= "human", Man.attributes =~= "dies".
-
-? mortal(SOCRATES).
-
-# 8. Evidence: Collecting Facts
-entity PLATO: Man.
-  description = "Student of Socrates"
-
-entity ARISTOTLE: Man.
-  description = "The Philosopher"
+entity ARISTOTLE: Man, description = "The Philosopher".
 
 philosopher_match(P) :- P.description =~= "philosopher".
 ? findall(P, philosopher_match(P), Philosophers), println("Philosophers: ", Philosophers).

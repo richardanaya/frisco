@@ -1,0 +1,9 @@
+# Simple test of concept definitions
+concept Butter: description = "rich dairy fat, creamy, solid at room temp", attributes = ["cooking fat", "solid texture", "dairy"].
+
+concept OliveOil: description = "liquid plant fat, fruity, heart-healthy", attributes = ["cooking fat", "liquid texture", "plant-based"].
+
+# Test semantic matching
+? "butter" =~= "dairy fat".
+
+? "olive oil" =~= "plant-based oil".

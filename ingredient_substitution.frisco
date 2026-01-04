@@ -1,0 +1,43 @@
+# Knowledge base of ingredients
+concept Butter: description = "rich dairy fat, creamy, solid at room temp", attributes = ["cooking fat", "solid texture", "dairy"].
+
+concept OliveOil: description = "liquid plant fat, fruity, heart-healthy", attributes = ["cooking fat", "liquid texture", "plant-based"].
+
+concept CoconutOil: description = "tropical plant fat, solid at room temp, mild flavor", attributes = ["cooking fat", "solid texture", "plant-based"].
+
+concept Lard: description = "rendered pork fat, solid, savory undertones", attributes = ["cooking fat", "solid texture", "animal"].
+
+# Can substitute if similar in cooking function AND texture
+good_substitute(X, Y) :-
+    similar_attr(cooking_function, X.description, Y.description),
+    similar_attr(texture, X.description, Y.description).
+
+# Vegan substitute: must be plant-based
+vegan_substitute(X, Y) :-
+    good_substitute(X, Y),
+    Y.description =~= "plant".
+
+# Interactive: ask user what they need to replace
+find_substitute :-
+    println("What ingredient do you need to substitute?"),
+    readln(Need),
+    println("Describe what you have available:"),
+    readln(Have),
+    check_substitute(Need, Have).
+
+check_substitute(Need, Have) :-
+    similar_attr(cooking_function, Need, Have),
+    similar_attr(texture, Need, Have),
+    println("✓ Good substitute! Similar function and texture.").
+
+check_substitute(Need, Have) :-
+    similar_attr(cooking_function, Need, Have),
+    not similar_attr(texture, Need, Have),
+    println("⚠ Partial match: same function, different texture.").
+
+check_substitute(Need, Have) :-
+    not similar_attr(cooking_function, Need, Have),
+    println("✗ Poor substitute: different cooking function.").
+
+# Try it:
+? find_substitute.

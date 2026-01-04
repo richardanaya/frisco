@@ -209,14 +209,10 @@ print("A is ", "A").</code></pre>
 
                 <h4>Example: Interactive Ingredient Substitute Finder</h4>
                 <pre><code class="language-frisco"># Knowledge base of ingredients
-BUTTER = concept:
-    description: "rich dairy fat, creamy, solid at room temp".
-OLIVE_OIL = concept:
-    description: "liquid plant fat, fruity, heart-healthy".
-COCONUT_OIL = concept:
-    description: "tropical plant fat, solid at room temp, mild flavor".
-LARD = concept:
-    description: "rendered pork fat, solid, savory undertones".
+concept Butter: description = "rich dairy fat, creamy, solid at room temp", attributes = ["cooking fat", "solid texture", "dairy"].
+concept OliveOil: description = "liquid plant fat, fruity, heart-healthy", attributes = ["cooking fat", "liquid texture", "plant-based"].
+concept CoconutOil: description = "tropical plant fat, solid at room temp, mild flavor", attributes = ["cooking fat", "solid texture", "plant-based"].
+concept Lard: description = "rendered pork fat, solid, savory undertones", attributes = ["cooking fat", "solid texture", "animal"].
 
 # Can substitute if similar in cooking function AND texture
 good_substitute(X, Y) :-
