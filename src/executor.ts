@@ -81,10 +81,19 @@ export class Executor {
       this.outputSolution(solution, query.body);
     }
 
-    if (solutionCount === 0) {
-      this.outputHandler('False');
-    } else {
-      this.outputHandler('True');
+    const hasSideEffects = query.body.some(condition => {
+      if (condition.type === 'PredicateCall') {
+        return ['print', 'println', 'readln'].includes(condition.name);
+      }
+      return false;
+    });
+
+    if (!hasSideEffects) {
+      if (solutionCount === 0) {
+        this.outputHandler('False');
+      } else {
+        this.outputHandler('True');
+      }
     }
   }
 

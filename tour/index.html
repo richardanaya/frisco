@@ -231,6 +231,27 @@ mortal(X) :-
                 </p>
                 <pre><code class="language-frisco">? mortal(SOCRATES).
 # True</code></pre>
+
+                <h4>AND vs. OR in Rules</h4>
+                <p>
+                    Prolog rules combine logic operators naturally:
+                </p>
+                <ul>
+                    <li><strong>AND (within a rule)</strong>: Commas (<code>,</code>) mean all conditions must be true.</li>
+                    <li><strong>OR (between rules)</strong>: Multiple rules for the same predicate are tried in order until one succeeds.</li>
+                </ul>
+                <p>
+                    Example:
+                </p>
+                <pre><code class="language-frisco"># AND: Both conditions required
+mortal(X) :- human(X), alive(X).
+
+# OR: Either rule can make X mortal
+mortal(X) :- human(X), alive(X).  # Rule 1
+mortal(X) :- god(X).              # Rule 2 (gods are immortal, but wait...)</code></pre>
+                <p>
+                    This creates flexible decision trees—perfect for classification and ethics.
+                </p>
             </section>
 
             <!-- 8. Evidence -->

@@ -49,6 +49,23 @@ export class Parser {
     if (this.check(TokenType.CONCEPT)) return this.parseConceptDeclaration();
     if (this.check(TokenType.ENTITY)) return this.parseEntityDeclaration();
     if (this.check(TokenType.QUERY)) return this.parseQuery();
+    if (this.check(TokenType.IDENTIFIER) && this.peek(1).type === TokenType.LPAREN) {
+      // Check if it's a fact (ends with DOT) or rule (has IMPLIES)
+      const startPos = this.position;
+      try {
+        this.parsePredicateHead();
+        if (this.check(TokenType.DOT)) {
+          this.position = startPos;
+          const head = this.parsePredicateHead();
+          this.expect(TokenType.DOT);
+          return { type: 'RuleDeclaration', head, body: [] };
+        } else {
+          this.position = startPos;
+        }
+      } catch {
+        this.position = startPos;
+      }
+    }
     return this.parseRuleOrAssignment();
   }
 
