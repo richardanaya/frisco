@@ -152,6 +152,61 @@ This is less epistemologically pure (it compares measurements rather than checki
 
 The key insight: `share_attr/3` is **binary** (yes/no), not gradient. An elephant and mouse *both have size* — that's what matters for concept formation, not that their sizes differ enormously.
 
+#### Example: The Elephant and Mouse Problem
+
+Can an elephant and a mouse be grouped under the same concept? Intuition says no — they're completely different sizes! But Rand's measurement-omission says **yes**:
+
+```frisco
+# Compare MEASUREMENTS - are they close?
+? similar_attr(size, "elephant", "mouse").
+# FALSE - vastly different sizes
+
+# Check if they SHARE the attribute
+? share_attr(size, "elephant", "mouse").
+# TRUE - both HAVE size!
+```
+
+The difference is profound:
+
+| Comparison | `similar_attr` | `share_attr` | Why? |
+|------------|---------------|--------------|------|
+| elephant vs mouse (size) | FALSE | **TRUE** | Different measurements, but both *have* size |
+| human vs mayfly (lifespan) | FALSE | **TRUE** | 80 years vs 24 hours, but both *are mortal* |
+| dog vs rock (metabolism) | FALSE | **FALSE** | Rock doesn't have metabolism *at all* |
+
+The boundary of concept formation isn't "are these similar?" — it's "do they share this attribute?"
+
+```frisco
+# These CAN be grouped (both possess the attribute):
+share_attr(size, "elephant", "mouse")        # TRUE - concept: "physical object"
+share_attr(lifespan, "human", "mayfly")      # TRUE - concept: "mortal being"
+share_attr(color, "apple", "fire truck")     # TRUE - concept: "colored thing"
+
+# These CANNOT be grouped (one lacks the attribute entirely):
+share_attr(metabolism, "dog", "rock")        # FALSE - rock has NO metabolism
+share_attr(color, "apple", "justice")        # FALSE - justice has NO color
+share_attr(lifespan, "human", "number 7")    # FALSE - numbers don't die
+```
+
+This is exactly Rand's principle: concepts group concretes that **share characteristics** while **differing in measurements**. The measurements are omitted — what matters is whether the attribute is *present*.
+
+#### Example: Building Definitions with Differentia
+
+The `differentia/3` predicate finds what distinguishes a concept from its genus:
+
+```frisco
+? differentia("human", "other animals", X).
+# X = "rationality"
+
+? differentia("square", "rectangles", X).
+# X = "equal sides"
+
+? differentia("triangle", "polygons", X).
+# X = "three sides"
+```
+
+This implements the Objectivist definition structure: **genus + differentia**. A human is an *animal* (genus) with *rationality* (differentia). A square is a *rectangle* with *equal sides*.
+
 ---
 
 ## ✨ Key Features
@@ -160,7 +215,7 @@ The key insight: `share_attr/3` is **binary** (yes/no), not gradient. An elephan
 Define abstract ideas with descriptions, attributes, and essentials — mirroring human conceptual hierarchies.
 
 ### 🔍 **Semantic Matching**
-The revolutionary `=~=` operator uses an LLM-as-judge to match meaning via measurement omission, not syntax.
+Epistemologically-grounded operations: `=~=` for conceptual identity, `share_attr/3` for true measurement-omission, and `differentia/3` for building definitions.
 
 ### ⚡ **Logic Programming**
 Prolog-style rules and queries with unification, backtracking, and variable binding.

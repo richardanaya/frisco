@@ -1,0 +1,108 @@
+# Concept Formation: What makes things groupable?
+# Using measurement-omission to discover conceptual structure
+
+# =============================================================================
+# SCENARIO: We have a collection of things. Can we group them into concepts?
+# =============================================================================
+
+# Some concretes we want to reason about
+entity FIDO: Thing, description = "golden retriever dog".
+entity WHISKERS: Thing, description = "tabby cat".
+entity OAK: Thing, description = "oak tree in the backyard".
+entity ROCK: Thing, description = "granite boulder".
+entity SOCRATES: Thing, description = "ancient Greek philosopher".
+entity JUSTICE: Thing, description = "the abstract concept of fairness".
+
+# =============================================================================
+# DISCOVERY: What attributes could group these?
+# =============================================================================
+
+# Can we form a concept "living thing"?
+# Test: do they share the attribute "metabolism"?
+
+can_group_as_living(X, Y) :-
+  share_attr(metabolism, X.description, Y.description),
+  println(X, "and", Y, "could be grouped - both have metabolism").
+
+cannot_group_as_living(X, Y) :-
+  not(share_attr(metabolism, X.description, Y.description)),
+  println(X, "and", Y, "CANNOT be grouped by metabolism").
+
+# =============================================================================
+# BUILDING DEFINITIONS: genus + differentia
+# =============================================================================
+
+# What makes a human different from other animals?
+define_human :-
+  differentia("human", "other animals", Diff),
+  println("Definition: Human = Animal +", Diff).
+
+# What makes a dog different from other mammals?
+define_dog :-
+  differentia("dog", "other mammals", Diff),
+  println("Definition: Dog = Mammal +", Diff).
+
+# What makes a triangle different from other shapes?
+define_triangle :-
+  differentia("triangle", "other polygons", Diff),
+  println("Definition: Triangle = Polygon +", Diff).
+
+# =============================================================================
+# CONCEPTUAL HIERARCHY: Building from shared attributes
+# =============================================================================
+
+# Things that share "physical extension" can be grouped as "physical objects"
+is_physical(X) :-
+  has_attr(spatial_location, X.description),
+  has_attr(mass, X.description).
+
+# Things that share "metabolism" can be grouped as "living things"
+is_living(X) :-
+  has_attr(metabolism, X.description),
+  has_attr(growth, X.description).
+
+# Things that share "consciousness" can be grouped as "sentient beings"
+is_sentient(X) :-
+  has_attr(consciousness, X.description),
+  has_attr(perception, X.description).
+
+# Things that share "rationality" are "rational beings"
+is_rational(X) :-
+  has_attr(reason, X.description),
+  has_attr(volition, X.description).
+
+# =============================================================================
+# THE HIERARCHY IN ACTION
+# =============================================================================
+
+classify(X) :-
+  println(""),
+  println("=== Classifying:", X, "==="),
+  (is_physical(X) -> println("  ✓ Physical object") ; println("  ✗ Not physical")),
+  (is_living(X) -> println("  ✓ Living thing") ; println("  ✗ Not living")),
+  (is_sentient(X) -> println("  ✓ Sentient being") ; println("  ✗ Not sentient")),
+  (is_rational(X) -> println("  ✓ Rational being") ; println("  ✗ Not rational")).
+
+# =============================================================================
+# RUN THE EXAMPLES
+# =============================================================================
+
+? println("--- GROUPABILITY BY METABOLISM ---").
+? can_group_as_living(FIDO, WHISKERS).
+? can_group_as_living(FIDO, OAK).
+? cannot_group_as_living(FIDO, ROCK).
+? cannot_group_as_living(OAK, JUSTICE).
+
+? println("").
+? println("--- DEFINITIONS VIA DIFFERENTIA ---").
+? define_human.
+? define_dog.
+? define_triangle.
+
+? println("").
+? println("--- CONCEPTUAL CLASSIFICATION ---").
+? classify(FIDO).
+? classify(OAK).
+? classify(ROCK).
+? classify(SOCRATES).
+? classify(JUSTICE).

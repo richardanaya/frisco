@@ -1,0 +1,88 @@
+# The Measurement-Omission Insight
+# Why share_attr is fundamentally different from similar_attr
+
+# =============================================================================
+# THE KEY QUESTION: Can an elephant and a mouse be in the same concept?
+# =============================================================================
+
+# Intuition says NO - they're completely different sizes!
+# But Rand says YES - they BOTH HAVE SIZE (we omit the measurement)
+
+? println("=== THE ELEPHANT AND MOUSE PROBLEM ===").
+? println("").
+
+# similar_attr compares MEASUREMENTS - are they close?
+test_similar :-
+  (similar_attr(size, "elephant", "mouse")
+    -> println("similar_attr(size, elephant, mouse): TRUE - similar sizes")
+    ;  println("similar_attr(size, elephant, mouse): FALSE - very different sizes")).
+
+# share_attr asks: do they BOTH POSSESS the attribute?
+test_share :-
+  (share_attr(size, "elephant", "mouse")
+    -> println("share_attr(size, elephant, mouse):   TRUE - both HAVE size!")
+    ;  println("share_attr(size, elephant, mouse):   FALSE")).
+
+? test_similar.
+? test_share.
+
+? println("").
+? println("The elephant and mouse have VASTLY different sizes.").
+? println("But they BOTH HAVE SIZE - that's what lets us group them").
+? println("under the concept 'physical object' or 'animal'.").
+? println("").
+? println("This is Rand's measurement-omission principle:").
+? println("Concepts retain the CHARACTERISTIC, omit the MEASUREMENT.").
+
+# =============================================================================
+# ANOTHER EXAMPLE: Lifespan
+# =============================================================================
+
+? println("").
+? println("=== HUMAN vs MAYFLY ===").
+
+test_lifespan_similar :-
+  (similar_attr(lifespan, "human", "mayfly")
+    -> println("similar_attr(lifespan): TRUE")
+    ;  println("similar_attr(lifespan): FALSE - 80 years vs 24 hours!")).
+
+test_lifespan_share :-
+  (share_attr(lifespan, "human", "mayfly")
+    -> println("share_attr(lifespan):   TRUE - both HAVE lifespans!")
+    ;  println("share_attr(lifespan):   FALSE")).
+
+? test_lifespan_similar.
+? test_lifespan_share.
+
+? println("").
+? println("A human lives ~80 years, a mayfly lives ~24 hours.").
+? println("Radically different measurements - but BOTH ARE MORTAL.").
+? println("They can be grouped under 'living thing' or 'mortal being'.").
+
+# =============================================================================
+# WHAT CAN'T BE GROUPED: Missing attributes entirely
+# =============================================================================
+
+? println("").
+? println("=== WHAT CAN'T BE GROUPED ===").
+
+test_metabolism :-
+  (share_attr(metabolism, "dog", "rock")
+    -> println("share_attr(metabolism, dog, rock): TRUE")
+    ;  println("share_attr(metabolism, dog, rock): FALSE - rock has NO metabolism")).
+
+test_color_abstract :-
+  (share_attr(color, "apple", "justice")
+    -> println("share_attr(color, apple, justice): TRUE")
+    ;  println("share_attr(color, apple, justice): FALSE - justice has NO color")).
+
+? test_metabolism.
+? test_color_abstract.
+
+? println("").
+? println("A dog and rock CAN'T be grouped by metabolism -").
+? println("not because their metabolisms differ, but because").
+? println("ROCK DOESN'T HAVE METABOLISM AT ALL.").
+? println("").
+? println("This is the boundary of concept formation:").
+? println("you can only group things that SHARE the attribute.").
