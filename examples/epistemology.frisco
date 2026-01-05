@@ -1,0 +1,124 @@
+# Epistemological Operations in Frisco
+# Demonstrating measurement-omission and concept formation
+
+# =============================================================================
+# 1. CONCEPTUAL IDENTITY (=~=)
+# Asks: "Do these descriptions refer to the same concept?"
+# This is linguistic co-reference, not epistemology per se.
+# =============================================================================
+
+concept Dog: description = "domesticated canine".
+entity FIDO: Dog, description = "golden retriever".
+
+# These should match - same concept, different words
+test_identity_1 :- "dog" =~= "canine", println("dog =~= canine: PASS").
+test_identity_2 :- "philosopher" =~= "lover of wisdom", println("philosopher =~= lover of wisdom: PASS").
+
+# This should NOT match - different concepts
+test_identity_3 :- not("dog" =~= "mathematics"), println("dog =/= mathematics: PASS").
+
+
+# =============================================================================
+# 2. ATTRIBUTE POSSESSION (has_attr/2)
+# Asks: "Does this concrete possess this characteristic at all?"
+# This is the RETENTION half of measurement-omission.
+# =============================================================================
+
+# Physical objects have size, color, mass
+test_has_attr_1 :- has_attr(size, "elephant"), println("has_attr(size, elephant): PASS").
+test_has_attr_2 :- has_attr(size, "mouse"), println("has_attr(size, mouse): PASS").
+test_has_attr_3 :- has_attr(color, "apple"), println("has_attr(color, apple): PASS").
+
+# Abstractions lack physical attributes
+test_has_attr_4 :- not(has_attr(color, "justice")), println("NOT has_attr(color, justice): PASS").
+test_has_attr_5 :- not(has_attr(lifespan, "rock")), println("NOT has_attr(lifespan, rock): PASS").
+
+# Living things have metabolism
+test_has_attr_6 :- has_attr(metabolism, "dog"), println("has_attr(metabolism, dog): PASS").
+test_has_attr_7 :- not(has_attr(metabolism, "rock")), println("NOT has_attr(metabolism, rock): PASS").
+
+
+# =============================================================================
+# 3. SHARED CHARACTERISTICS (share_attr/3)
+# Asks: "Do BOTH concretes possess this characteristic?"
+# This is TRUE MEASUREMENT-OMISSION.
+# =============================================================================
+
+# Both elephant and mouse have size - despite VASTLY different measurements!
+test_share_1 :- share_attr(size, "elephant", "mouse"), println("share_attr(size, elephant, mouse): PASS - both have size!").
+
+# Both apple and fire truck have color
+test_share_2 :- share_attr(color, "apple", "fire truck"), println("share_attr(color, apple, fire truck): PASS").
+
+# Dog has metabolism, rock does not - they don't share this attribute
+test_share_3 :- not(share_attr(metabolism, "dog", "rock")), println("NOT share_attr(metabolism, dog, rock): PASS").
+
+# Both human and mayfly have lifespans (even though vastly different!)
+test_share_4 :- share_attr(lifespan, "human", "mayfly"), println("share_attr(lifespan, human, mayfly): PASS").
+
+
+# =============================================================================
+# 4. DIFFERENTIA (differentia/3)
+# Asks: "What distinguishes A from B (its genus)?"
+# Implements Objectivist definition: genus + differentia
+# =============================================================================
+
+# Human is distinguished from other animals by rationality
+test_diff_1 :- differentia("human", "other animals", X), println("differentia(human, animals) =", X).
+
+# Square is distinguished from rectangles by equal sides
+test_diff_2 :- differentia("square", "rectangles", X), println("differentia(square, rectangles) =", X).
+
+# Triangle is distinguished from polygons by having three sides
+test_diff_3 :- differentia("triangle", "polygons", X), println("differentia(triangle, polygons) =", X).
+
+
+# =============================================================================
+# 5. GRADIENT SIMILARITY (similar_attr/3)
+# Asks: "How similar are their MEASUREMENTS along this axis?"
+# Less epistemologically pure - compares measurements, not just presence.
+# =============================================================================
+
+# Crimson and scarlet are similar shades of red
+test_similar_1 :- similar_attr(color, "crimson", "scarlet"), println("similar_attr(color, crimson, scarlet): PASS").
+
+# Elephant and mouse have VERY different sizes - should fail similarity test
+test_similar_2 :- not(similar_attr(size, "elephant", "mouse")), println("NOT similar_attr(size, elephant, mouse): PASS - different measurements").
+
+
+# =============================================================================
+# THE KEY INSIGHT
+# =============================================================================
+#
+# Compare share_attr vs similar_attr for elephant and mouse:
+#
+#   share_attr(size, "elephant", "mouse")   -> TRUE (both HAVE size)
+#   similar_attr(size, "elephant", "mouse") -> FALSE (different measurements)
+#
+# For CONCEPT FORMATION, what matters is share_attr (do they share the attribute?)
+# For PRACTICAL COMPARISON, similar_attr tells you if measurements are close.
+#
+# This is Rand's measurement-omission principle:
+# Concepts group concretes that SHARE attributes while DIFFERING in measurements.
+# =============================================================================
+
+# Run all tests
+? test_identity_1.
+? test_identity_2.
+? test_identity_3.
+? test_has_attr_1.
+? test_has_attr_2.
+? test_has_attr_3.
+? test_has_attr_4.
+? test_has_attr_5.
+? test_has_attr_6.
+? test_has_attr_7.
+? test_share_1.
+? test_share_2.
+? test_share_3.
+? test_share_4.
+? test_diff_1.
+? test_diff_2.
+? test_diff_3.
+? test_similar_1.
+? test_similar_2.

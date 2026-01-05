@@ -73,13 +73,47 @@ const builtinTable: Record<string, BuiltinHandler> = {
     const t = exec.deref(args[0], subst);
     if (t.type === 'List') yield subst;
   },
+  // Gradient similarity along an axis (less epistemologically pure, but useful)
   similar_attr: async function* (args, subst, exec) {
     if (args.length !== 3) return;
-    const dim = exec.termToString(exec.deref(args[0], subst), subst);
+    const dim = exec.termToString(exec.deref(args[0], subst), subst).replace(/^"|"$/g, '');
     const a = exec.termToString(exec.deref(args[1], subst), subst).replace(/^"|"$/g, '');
     const b = exec.termToString(exec.deref(args[2], subst), subst).replace(/^"|"$/g, '');
     const ok = await exec.getMatcher().matchWithThreshold(a, b, dim);
     if (ok) yield subst;
+  },
+
+  // has_attr/2: Does this concrete possess this characteristic? (measurement-omission)
+  has_attr: async function* (args, subst, exec) {
+    if (args.length !== 2) return;
+    const characteristic = exec.termToString(exec.deref(args[0], subst), subst).replace(/^"|"$/g, '');
+    const concrete = exec.termToString(exec.deref(args[1], subst), subst).replace(/^"|"$/g, '');
+    const ok = await exec.getMatcher().hasAttribute(characteristic, concrete);
+    if (ok) yield subst;
+  },
+
+  // share_attr/3: Do both concretes possess this characteristic? (measurement-omission)
+  share_attr: async function* (args, subst, exec) {
+    if (args.length !== 3) return;
+    const characteristic = exec.termToString(exec.deref(args[0], subst), subst).replace(/^"|"$/g, '');
+    const a = exec.termToString(exec.deref(args[1], subst), subst).replace(/^"|"$/g, '');
+    const b = exec.termToString(exec.deref(args[2], subst), subst).replace(/^"|"$/g, '');
+    const ok = await exec.getMatcher().shareAttribute(characteristic, a, b);
+    if (ok) yield subst;
+  },
+
+  // differentia/3: What distinguishes A from B? Binds result to third argument
+  differentia: async function* (args, subst, exec) {
+    if (args.length !== 3) return;
+    const a = exec.termToString(exec.deref(args[0], subst), subst).replace(/^"|"$/g, '');
+    const b = exec.termToString(exec.deref(args[1], subst), subst).replace(/^"|"$/g, '');
+    const resultVar = exec.deref(args[2], subst);
+    const differentia = await exec.getMatcher().getDifferentia(a, b);
+    if (differentia) {
+      const resultTerm: AST.StringLiteral = { type: 'StringLiteral', value: differentia };
+      const unified = exec.unify(resultVar, resultTerm, subst);
+      if (unified) yield unified;
+    }
   },
   is_unbound: async function* (args, subst, exec) {
     if (args.length !== 1) return;

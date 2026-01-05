@@ -76,55 +76,81 @@ In Frisco:
 concept Triangle: description = "three-sided polygon", essentials = ["three_sides", "three_angles"], attributes = ["closed_shape", "plane_figure"].
 ```
 
-### LLM-as-Judge: Two Modes of Conceptual Comparison
+### LLM-as-Judge: Epistemologically-Grounded Operations
 
-Human concepts are not rigid symbol-matching systems — we recognize that "canine" and "dog" refer to the same entity despite different words. Frisco bridges symbolic logic and perceptual cognition using an **LLM-as-judge** approach with two distinct operations:
+Human concepts are not rigid symbol-matching systems — we recognize that "canine" and "dog" refer to the same entity despite different words. Frisco uses an **LLM-as-judge** to implement operations grounded in Objectivist epistemology:
 
 #### 1. Conceptual Identity (`=~=`)
 
-The `=~=` operator asks: **"Do these descriptions pick out the same concept or referent?"**
+The `=~=` operator asks: **"Do these descriptions refer to the same concept?"**
 
 ```frisco
 "dog" =~= "canine"                    # True - same concept
 "philosopher" =~= "lover of wisdom"   # True - same concept
-"mortal" =~= "finite lifespan"        # True - same concept
 "dog" =~= "vehicle"                   # False - different concepts
 ```
 
-This is about **what something IS** — identifying whether two descriptions refer to the same abstract concept or concrete entity. The LLM judges conceptual identity, recognizing synonyms, paraphrases, and equivalent formulations.
+This is a **linguistic/semantic** operation — recognizing synonyms, paraphrases, and equivalent formulations. Useful but not strictly epistemological.
 
-#### 2. Measurement Omission (`similar_attr/3`)
+#### 2. Attribute Possession (`has_attr/2`)
 
-The `similar_attr(Axis, A, B)` predicate asks: **"Do these concretes share this specific attribute, regardless of their measurements?"**
+The `has_attr(Characteristic, Concrete)` predicate asks: **"Does this concrete possess this characteristic at all?"**
 
 ```frisco
-similar_attr(color, "crimson", "scarlet")      # True - both are shades of red
-similar_attr(lifespan, "human", "mayfly")      # Low - very different durations
-similar_attr(material, "wooden chair", "oak table")  # True - both are wood
+has_attr(size, "elephant")        # True - elephants have size
+has_attr(size, "mouse")           # True - mice have size too!
+has_attr(color, "justice")        # False - abstractions lack color
+has_attr(lifespan, "rock")        # False - rocks don't have lifespans
 ```
 
-This is true **measurement omission** as described in Objectivist epistemology: concepts group concretes that share an attribute while differing in its specific measurement. The LLM evaluates similarity along a *specific dimension*, ignoring all other properties.
+This is the **retention** half of measurement-omission: we care whether the attribute *exists*, not its specific value.
+
+#### 3. Shared Characteristics (`share_attr/3`)
+
+The `share_attr(Characteristic, A, B)` predicate asks: **"Do both concretes possess this characteristic?"**
+
+```frisco
+share_attr(size, "elephant", "mouse")      # True! Both have size
+share_attr(color, "apple", "fire truck")   # True - both have color
+share_attr(metabolism, "dog", "rock")      # False - rock lacks it
+```
+
+This is true **measurement-omission**: the question is whether they *share the attribute type*, not whether their measurements are similar. An elephant and a mouse are vastly different in size, but *both have size* — so they can be grouped by this characteristic.
+
+#### 4. Differentia (`differentia/3`)
+
+The `differentia(A, B, Result)` predicate asks: **"What distinguishes A from B?"**
+
+```frisco
+differentia("human", "other animals", X)   # X = "rationality"
+differentia("square", "rectangles", X)     # X = "equal sides"
+differentia("triangle", "polygons", X)     # X = "three sides"
+```
+
+This implements the Objectivist definition structure: **genus + differentia**. Given a concept and its genus, find what distinguishes it.
+
+#### 5. Gradient Similarity (`similar_attr/3`)
+
+The `similar_attr(Axis, A, B)` predicate asks: **"How similar are their measurements along this axis?"**
+
+```frisco
+similar_attr(color, "crimson", "scarlet")  # High - similar shades
+similar_attr(size, "elephant", "mouse")    # Low - very different
+```
+
+This is less epistemologically pure (it compares measurements rather than checking for attribute presence) but still useful for practical reasoning.
 
 #### The Objectivist Distinction
 
-From Rand's theory of concepts:
-- **Concept formation** involves recognizing that concretes share attributes while their measurements differ
-- **Conceptual identity** is about whether descriptions refer to the same abstraction
+| Operation | Question | Epistemological Role |
+|-----------|----------|---------------------|
+| `=~=` | Same concept? | Linguistic co-reference |
+| `has_attr/2` | Has this attribute? | Attribute retention |
+| `share_attr/3` | Both have this attribute? | **Measurement-omission** |
+| `differentia/3` | What distinguishes A from B? | Definition (genus + differentia) |
+| `similar_attr/3` | How similar on this axis? | Gradient comparison |
 
-Frisco separates these:
-- `=~=` handles **conceptual identity** — "Is this the same concept?"
-- `similar_attr/3` handles **measurement omission** — "Do these share this attribute?"
-
-#### How the LLM Scoring Works
-
-The LLM returns a similarity score from 0.0 to 1.0:
-- **1.0**: Same or nearly identical (identical concept, or same measurement on axis)
-- **0.7-0.9**: Clearly comparable, same general category/range
-- **0.4-0.6**: Related but significantly different
-- **0.1-0.3**: Weak or metaphorical connection
-- **0.0**: Unrelated (different concepts, or attribute not shared)
-
-A match succeeds when similarity ≥ 0.7 (configurable threshold).
+The key insight: `share_attr/3` is **binary** (yes/no), not gradient. An elephant and mouse *both have size* — that's what matters for concept formation, not that their sizes differ enormously.
 
 ---
 

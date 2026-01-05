@@ -1214,11 +1214,61 @@ var ExecutorWeb = class {
 };
 
 // web/src/semantic-matcher-web.ts
-var SYSTEM_PROMPT = `You are measuring attribute similarity for concept formation.
+var CONCEPTUAL_IDENTITY_PROMPT = `You are judging conceptual identity.
+
+Given two descriptions, determine whether they refer to the same concept or entity.
+This is about linguistic co-reference: do these expressions pick out the same abstract concept or concrete referent?
+
+Examples:
+- "dog" and "canine" -> same concept (1.0)
+- "happy" and "joyful" -> same concept (1.0)
+- "philosopher" and "lover of wisdom" -> same concept (0.9)
+- "dog" and "animal" -> related but not identical (0.5)
+- "dog" and "mathematics" -> different concepts (0.0)
+
+Return a score from 0.0 to 1.0 indicating conceptual identity.`;
+var HAS_ATTRIBUTE_PROMPT = `You are judging whether a concrete possesses a characteristic.
+
+Given a characteristic (an attribute type) and a concrete (an entity or thing), determine whether the concrete possesses this characteristic AT ALL, regardless of its specific measurement.
+
+This implements measurement-omission from Objectivist epistemology: we care whether the attribute EXISTS, not its specific value.
+
+Examples:
+- Characteristic: "size", Concrete: "elephant" -> true (elephants have size)
+- Characteristic: "size", Concrete: "mouse" -> true (mice have size too!)
+- Characteristic: "color", Concrete: "justice" -> false (abstractions lack color)
+- Characteristic: "lifespan", Concrete: "rock" -> false (rocks don't have lifespans)
+- Characteristic: "temperature", Concrete: "water" -> true (water has temperature)
+
+Return true if the concrete possesses this characteristic, false if it lacks it entirely.`;
+var SHARE_ATTRIBUTE_PROMPT = `You are judging whether two concretes both possess a characteristic.
+
+Given a characteristic and two concretes, determine whether BOTH possess this characteristic, regardless of their specific measurements.
+
+This implements measurement-omission: the key question is whether they SHARE the attribute type, not whether their measurements are similar.
+
+Examples:
+- Characteristic: "size", Concrete1: "elephant", Concrete2: "mouse" -> true (both have size!)
+- Characteristic: "color", Concrete1: "apple", Concrete2: "fire truck" -> true (both have color)
+- Characteristic: "metabolism", Concrete1: "dog", Concrete2: "rock" -> false (rock lacks metabolism)
+- Characteristic: "lifespan", Concrete1: "human", Concrete2: "corporation" -> debatable/metaphorical
+
+Return true if BOTH possess the characteristic, false if either lacks it.`;
+var DIFFERENTIA_PROMPT = `You are identifying the differentia - what distinguishes one thing from another.
+
+In Objectivist epistemology, a definition has the form "genus + differentia" - the category something belongs to, plus what distinguishes it from other members of that category.
+
+Given two things (where the second is typically the genus or comparison class), identify the key characteristic that distinguishes the first from the second.
+
+Examples:
+- A: "human", B: "other animals" -> differentia: "rationality" or "rational faculty"
+- A: "square", B: "rectangles" -> differentia: "equal sides"
+- A: "triangle", B: "polygons" -> differentia: "three sides"
+
+Return the distinguishing characteristic as a concise phrase.`;
+var SIMILAR_ATTR_PROMPT = `You are measuring attribute similarity for concept formation.
 
 Given an axis (a measurable attribute) and two concretes, determine how similar they are along ONLY that axis, ignoring all other properties.
-
-This follows measurement-omission: concepts group concretes that share an attribute while differing in its measurement. You are measuring whether two concretes HAVE the attribute and how comparable their measurements are.
 
 Scoring:
 - 1.0: Same or nearly identical measurement on this axis
@@ -1227,7 +1277,7 @@ Scoring:
 - 0.1-0.3: One possesses the attribute weakly or metaphorically
 - 0.0: One or both lack this attribute entirely
 
-Respond with ONLY a decimal number between 0 and 1.`;
+Respond with a similarity score.`;
 var SemanticMatcherWeb = class {
   constructor(threshold = 0.7, endpoint = "http://localhost:9090") {
     __publicField(this, "threshold");
@@ -1240,10 +1290,7 @@ var SemanticMatcherWeb = class {
       onProgress({ status: "ready", progress: 100 });
     }
   }
-  async getSimilarityScore(axis, concrete1, concrete2) {
-    const userMessage = `Axis: ${axis}
-Concrete 1: ${concrete1}
-Concrete 2: ${concrete2}`;
+  async callLLM(systemPrompt, userMessage, schema) {
     try {
       const response = await fetch(`${this.endpoint}/v1/chat/completions`, {
         method: "POST",
@@ -1252,77 +1299,139 @@ Concrete 2: ${concrete2}`;
         },
         body: JSON.stringify({
           messages: [
-            { role: "system", content: SYSTEM_PROMPT },
+            { role: "system", content: systemPrompt },
             { role: "user", content: userMessage }
           ],
           response_format: {
             type: "json_schema",
             json_schema: {
-              name: "similarity_score",
+              name: "response",
               strict: true,
-              schema: {
-                type: "object",
-                properties: {
-                  similarity: { type: "number" }
-                },
-                required: ["similarity"],
-                additionalProperties: false
-              }
+              schema
             }
           }
         })
       });
       if (!response.ok) {
         console.error(`LLM judge request failed: ${response.status} ${response.statusText}`);
-        return 0;
+        return null;
       }
       const data = await response.json();
       const content = data.choices?.[0]?.message?.content;
       if (!content) {
         console.error("No content in LLM response");
-        return 0;
+        return null;
       }
-      const parsed = JSON.parse(content);
-      const similarity = Math.max(0, Math.min(1, parsed.similarity));
-      console.log(`LLM judge similarity for "${axis}" between "${concrete1}" and "${concrete2}": ${similarity.toFixed(4)}`);
-      return similarity;
+      return JSON.parse(content);
     } catch (error) {
       console.error("Error calling LLM judge:", error);
-      return 0;
+      return null;
     }
   }
+  // =~= operator: conceptual identity (linguistic co-reference)
   async match(left, right) {
-    const axis = "conceptual identity";
     if (typeof left === "string") {
-      const similarity = await this.getSimilarityScore(axis, left, right);
-      console.log(`Similarity between "${left}" and "${right}": ${similarity.toFixed(4)}`);
-      return similarity >= this.threshold;
+      const score = await this.getConceptualIdentity(left, right);
+      return score >= this.threshold;
     } else {
       for (const item of left) {
-        const similarity = await this.getSimilarityScore(axis, item, right);
-        console.log(`Similarity between "${item}" and "${right}": ${similarity.toFixed(4)}`);
-        if (similarity >= this.threshold) {
+        const score = await this.getConceptualIdentity(item, right);
+        if (score >= this.threshold) {
           return true;
         }
       }
       return false;
     }
   }
-  async getSimilarity(left, right) {
-    const similarity = await this.getSimilarityScore("conceptual identity", left, right);
-    console.log(`Similarity between "${left}" and "${right}": ${similarity.toFixed(4)}`);
-    return similarity;
+  async getConceptualIdentity(a, b) {
+    const userMessage = `Description 1: ${a}
+Description 2: ${b}`;
+    const schema = {
+      type: "object",
+      properties: { similarity: { type: "number" } },
+      required: ["similarity"],
+      additionalProperties: false
+    };
+    const result = await this.callLLM(CONCEPTUAL_IDENTITY_PROMPT, userMessage, schema);
+    const score = result ? Math.max(0, Math.min(1, result.similarity)) : 0;
+    console.log(`Conceptual identity between "${a}" and "${b}": ${score.toFixed(4)}`);
+    return score;
   }
+  // Alias for backwards compatibility
+  async getSimilarity(left, right) {
+    return this.getConceptualIdentity(left, right);
+  }
+  // has_attr/2: Does this concrete possess this characteristic?
+  async hasAttribute(characteristic, concrete) {
+    const userMessage = `Characteristic: ${characteristic}
+Concrete: ${concrete}`;
+    const schema = {
+      type: "object",
+      properties: { result: { type: "boolean" } },
+      required: ["result"],
+      additionalProperties: false
+    };
+    const result = await this.callLLM(HAS_ATTRIBUTE_PROMPT, userMessage, schema);
+    const hasIt = result?.result ?? false;
+    console.log(`has_attr("${characteristic}", "${concrete}"): ${hasIt}`);
+    return hasIt;
+  }
+  // share_attr/3: Do both concretes possess this characteristic?
+  async shareAttribute(characteristic, a, b) {
+    const userMessage = `Characteristic: ${characteristic}
+Concrete 1: ${a}
+Concrete 2: ${b}`;
+    const schema = {
+      type: "object",
+      properties: { result: { type: "boolean" } },
+      required: ["result"],
+      additionalProperties: false
+    };
+    const result = await this.callLLM(SHARE_ATTRIBUTE_PROMPT, userMessage, schema);
+    const shared = result?.result ?? false;
+    console.log(`share_attr("${characteristic}", "${a}", "${b}"): ${shared}`);
+    return shared;
+  }
+  // differentia/3: What distinguishes A from B?
+  async getDifferentia(a, b) {
+    const userMessage = `A (the thing to define): ${a}
+B (the genus/comparison class): ${b}`;
+    const schema = {
+      type: "object",
+      properties: { result: { type: "string" } },
+      required: ["result"],
+      additionalProperties: false
+    };
+    const result = await this.callLLM(DIFFERENTIA_PROMPT, userMessage, schema);
+    const diff = result?.result ?? "";
+    console.log(`differentia("${a}", "${b}"): "${diff}"`);
+    return diff;
+  }
+  // similar_attr/3: Gradient similarity along an axis (less pure but still useful)
+  async getSimilarityAlongAxis(axis, a, b) {
+    const userMessage = `Axis: ${axis}
+Concrete 1: ${a}
+Concrete 2: ${b}`;
+    const schema = {
+      type: "object",
+      properties: { similarity: { type: "number" } },
+      required: ["similarity"],
+      additionalProperties: false
+    };
+    const result = await this.callLLM(SIMILAR_ATTR_PROMPT, userMessage, schema);
+    const score = result ? Math.max(0, Math.min(1, result.similarity)) : 0;
+    console.log(`similar_attr("${axis}", "${a}", "${b}"): ${score.toFixed(4)}`);
+    return score;
+  }
+  // Backwards compatibility: matchWithThreshold uses similar_attr logic
   async matchWithThreshold(left, right, dim) {
     const axis = dim || "conceptual identity";
     if (typeof left === "string") {
-      const similarity = await this.getSimilarityScore(axis, left, right);
-      console.log(`Similarity for "${axis}" between "${left}" and "${right}": ${similarity.toFixed(4)}`);
+      const similarity = axis === "conceptual identity" ? await this.getConceptualIdentity(left, right) : await this.getSimilarityAlongAxis(axis, left, right);
       return similarity >= this.threshold;
     } else {
       for (const item of left) {
-        const similarity = await this.getSimilarityScore(axis, item, right);
-        console.log(`Similarity for "${axis}" between "${item}" and "${right}": ${similarity.toFixed(4)}`);
+        const similarity = axis === "conceptual identity" ? await this.getConceptualIdentity(item, right) : await this.getSimilarityAlongAxis(axis, item, right);
         if (similarity >= this.threshold) {
           return true;
         }

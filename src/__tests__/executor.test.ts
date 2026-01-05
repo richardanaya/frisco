@@ -118,4 +118,75 @@ describe('Executor', () => {
     // Should have logged something
     expect(logs.length).toBeGreaterThan(0);
   }, 30000);
+
+  // Epistemological builtin tests (require LLM at localhost:9090)
+  test.skip('has_attr checks if concrete possesses characteristic', async () => {
+    const source = `
+      test_has_size :- has_attr(size, "elephant").
+      test_no_color :- not(has_attr(color, "justice")).
+      ? test_has_size.
+      ? test_no_color.
+    `;
+
+    const originalLog = console.log;
+    const logs: unknown[] = [];
+    console.log = (...args: unknown[]) => logs.push(args);
+
+    const lexer = new Lexer(source);
+    const parser = new Parser(lexer.tokenize());
+    const ast = parser.parse();
+    const executor = new Executor();
+
+    await executor.execute(ast);
+
+    console.log = originalLog;
+    expect(logs.some(log => Array.isArray(log) && log[0] === 'True')).toBe(true);
+  }, 30000);
+
+  test.skip('share_attr checks if both concretes share characteristic', async () => {
+    const source = `
+      # Both have size - measurement-omission!
+      test_share_size :- share_attr(size, "elephant", "mouse").
+      # Rock lacks metabolism
+      test_no_share :- not(share_attr(metabolism, "dog", "rock")).
+      ? test_share_size.
+      ? test_no_share.
+    `;
+
+    const originalLog = console.log;
+    const logs: unknown[] = [];
+    console.log = (...args: unknown[]) => logs.push(args);
+
+    const lexer = new Lexer(source);
+    const parser = new Parser(lexer.tokenize());
+    const ast = parser.parse();
+    const executor = new Executor();
+
+    await executor.execute(ast);
+
+    console.log = originalLog;
+    expect(logs.some(log => Array.isArray(log) && log[0] === 'True')).toBe(true);
+  }, 30000);
+
+  test.skip('differentia finds distinguishing characteristic', async () => {
+    const source = `
+      test_diff :- differentia("human", "other animals", X), println("Differentia:", X).
+      ? test_diff.
+    `;
+
+    const originalLog = console.log;
+    const logs: unknown[] = [];
+    console.log = (...args: unknown[]) => logs.push(args);
+
+    const lexer = new Lexer(source);
+    const parser = new Parser(lexer.tokenize());
+    const ast = parser.parse();
+    const executor = new Executor();
+
+    await executor.execute(ast);
+
+    console.log = originalLog;
+    // Should bind X to something like "rationality"
+    expect(logs.some(log => Array.isArray(log) && String(log[0]).includes('Differentia:'))).toBe(true);
+  }, 30000);
 });
