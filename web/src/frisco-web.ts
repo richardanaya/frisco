@@ -69,9 +69,9 @@ async function initializeMatcher() {
     if (progress.status === 'progress' && progress.progress !== undefined) {
       const percent = Math.round(progress.progress);
       progressFillEl.style.width = `${percent}%`;
-      progressTextEl.textContent = `Downloading model... ${percent}%`;
-    } else if (progress.status === 'done') {
-      progressTextEl.textContent = 'Model loaded!';
+       progressTextEl.textContent = `Downloading BGE-M3 model... ${percent}%`;
+     } else if (progress.status === 'done') {
+       progressTextEl.textContent = 'BGE-M3 model loaded!';
     } else if (progress.status === 'ready') {
       progressEl.classList.remove('visible');
     }
@@ -82,7 +82,7 @@ async function initializeMatcher() {
 
 async function initialize() {
   try {
-    appendOutput('Initializing embedding model (first load may take a moment)...', 'info');
+     appendOutput('Initializing BGE-M3 embedding model (first load may take a moment)...', 'info');
     await initializeMatcher();
 
     executor = new ExecutorWeb(
@@ -149,13 +149,10 @@ async function runCode(source: string) {
   appendOutput(source, 'input');
 
    try {
-     console.log('Processed source:', JSON.stringify(processedSource));
      const lexer = new Lexer(processedSource);
      const tokens = lexer.tokenize();
-     console.log('Tokens:', tokens.map(t => `${t.type}: ${t.value}`).join(', '));
      const parser = new Parser(tokens);
      const ast = parser.parse();
-     console.log('AST:', JSON.stringify(ast, null, 2));
      await executor.execute(ast);
   } catch (error) {
     if (error instanceof Error) {

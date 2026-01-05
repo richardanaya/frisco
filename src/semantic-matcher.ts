@@ -1,65 +1,102 @@
-import { EmbeddingModel, FlagEmbedding } from 'fastembed';
+// LLM-as-Judge Semantic Matcher
+// Uses structured output from localhost:9090 to measure attribute similarity
+
+const SYSTEM_PROMPT = `You are measuring attribute similarity for concept formation.
+
+Given an axis (a measurable attribute) and two concretes, determine how similar they are along ONLY that axis, ignoring all other properties.
+
+This follows measurement-omission: concepts group concretes that share an attribute while differing in its measurement. You are measuring whether two concretes HAVE the attribute and how comparable their measurements are.
+
+Scoring:
+- 1.0: Same or nearly identical measurement on this axis
+- 0.7-0.9: Clearly comparable, same general range
+- 0.4-0.6: Both possess the attribute but measurements differ significantly
+- 0.1-0.3: One possesses the attribute weakly or metaphorically
+- 0.0: One or both lack this attribute entirely
+
+Respond with ONLY a decimal number between 0 and 1.`;
+
+interface SimilarityResponse {
+  similarity: number;
+}
 
 export class SemanticMatcher {
-  private model: FlagEmbedding | null = null;
   private readonly threshold: number;
+  private readonly endpoint: string;
 
-  constructor(threshold: number = 0.7) {
+  constructor(threshold: number = 0.7, endpoint: string = 'http://localhost:9090') {
     this.threshold = threshold;
+    this.endpoint = endpoint;
   }
 
   async initialize(): Promise<void> {
-    if (!this.model) {
-      this.model = await FlagEmbedding.init({
-        model: EmbeddingModel.BGESmallENV15,
+    // No initialization needed for LLM-as-judge approach
+  }
+
+  private async getSimilarityScore(axis: string, concrete1: string, concrete2: string): Promise<number> {
+    const userMessage = `Axis: ${axis}\nConcrete 1: ${concrete1}\nConcrete 2: ${concrete2}`;
+
+    try {
+      const response = await fetch(`${this.endpoint}/v1/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: SYSTEM_PROMPT },
+            { role: 'user', content: userMessage }
+          ],
+          response_format: {
+            type: 'json_schema',
+            json_schema: {
+              name: 'similarity_score',
+              strict: true,
+              schema: {
+                type: 'object',
+                properties: {
+                  similarity: { type: 'number' }
+                },
+                required: ['similarity'],
+                additionalProperties: false
+              }
+            }
+          }
+        })
       });
+
+      if (!response.ok) {
+        console.error(`LLM judge request failed: ${response.status} ${response.statusText}`);
+        return 0;
+      }
+
+      const data = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
+      const content = data.choices?.[0]?.message?.content;
+
+      if (!content) {
+        console.error('No content in LLM response');
+        return 0;
+      }
+
+      const parsed: SimilarityResponse = JSON.parse(content);
+      const similarity = Math.max(0, Math.min(1, parsed.similarity));
+      return similarity;
+    } catch (error) {
+      console.error('Error calling LLM judge:', error);
+      return 0;
     }
-  }
-
-  private cosineSimilarity(a: number[], b: number[]): number {
-    let dotProduct = 0;
-    let magnitudeA = 0;
-    let magnitudeB = 0;
-
-    for (let i = 0; i < a.length; i++) {
-      dotProduct += a[i] * b[i];
-      magnitudeA += a[i] * a[i];
-      magnitudeB += b[i] * b[i];
-    }
-
-    magnitudeA = Math.sqrt(magnitudeA);
-    magnitudeB = Math.sqrt(magnitudeB);
-
-    if (magnitudeA === 0 || magnitudeB === 0) return 0;
-    return dotProduct / (magnitudeA * magnitudeB);
-  }
-
-  private async getEmbedding(text: string): Promise<number[]> {
-    if (!this.model) {
-      throw new Error('SemanticMatcher not initialized. Call initialize() first.');
-    }
-
-    const generator = this.model.embed([text]);
-    const result = await generator.next();
-    if (result.done || !result.value) {
-      throw new Error('Failed to generate embedding');
-    }
-    return Array.from(result.value[0]);
   }
 
   async match(left: string | string[], right: string): Promise<boolean> {
-    await this.initialize();
+    // For general semantic match without specific axis, use "semantic meaning" as axis
+    const axis = 'semantic meaning';
 
     if (typeof left === 'string') {
-      const leftEmbed = await this.getEmbedding(left);
-      const rightEmbed = await this.getEmbedding(right);
-      const similarity = this.cosineSimilarity(leftEmbed, rightEmbed);
+      const similarity = await this.getSimilarityScore(axis, left, right);
       return similarity >= this.threshold;
     } else {
-      const rightEmbed = await this.getEmbedding(right);
       for (const item of left) {
-        const leftEmbed = await this.getEmbedding(item);
-        const similarity = this.cosineSimilarity(leftEmbed, rightEmbed);
+        const similarity = await this.getSimilarityScore(axis, item, right);
         if (similarity >= this.threshold) {
           return true;
         }
@@ -69,32 +106,18 @@ export class SemanticMatcher {
   }
 
   async getSimilarity(left: string, right: string): Promise<number> {
-    await this.initialize();
-    const leftEmbed = await this.getEmbedding(left);
-    const rightEmbed = await this.getEmbedding(right);
-    return this.cosineSimilarity(leftEmbed, rightEmbed);
+    return this.getSimilarityScore('semantic meaning', left, right);
   }
 
   async matchWithThreshold(left: string | string[], right: string, dim?: string): Promise<boolean> {
-    if (!dim) {
-      return this.match(left, right);
-    }
-
-    await this.initialize();
-
-    const rightText = `${dim} of ${right}`;
-    const rightEmbed = await this.getEmbedding(rightText);
+    const axis = dim || 'semantic meaning';
 
     if (typeof left === 'string') {
-      const leftText = `${dim} of ${left}`;
-      const leftEmbed = await this.getEmbedding(leftText);
-      const similarity = this.cosineSimilarity(leftEmbed, rightEmbed);
+      const similarity = await this.getSimilarityScore(axis, left, right);
       return similarity >= this.threshold;
     } else {
       for (const item of left) {
-        const leftText = `${dim} of ${item}`;
-        const leftEmbed = await this.getEmbedding(leftText);
-        const similarity = this.cosineSimilarity(leftEmbed, rightEmbed);
+        const similarity = await this.getSimilarityScore(axis, item, right);
         if (similarity >= this.threshold) {
           return true;
         }
