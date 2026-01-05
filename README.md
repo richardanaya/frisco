@@ -19,7 +19,7 @@
 
 ## 🎯 What is Frisco?
 
-Frisco is a **logic programming language** focused on argument and ontology analysis: precise reasoning about concepts, relations, and semantic similarity. It combines Prolog-style inference with Objectivist epistemology and embedding-based semantic matching to compute philosophical arguments, scientific classifications, and logical proofs.
+Frisco is a **logic programming language** focused on argument and ontology analysis: precise reasoning about concepts, relations, and semantic similarity. It combines Prolog-style inference with Objectivist epistemology and LLM-based semantic matching to compute philosophical arguments, scientific classifications, and logical proofs.
 
 ### Project goal
 
@@ -30,8 +30,8 @@ Frisco is a **logic programming language** focused on argument and ontology anal
 
 - **Concept/ontology scaffolding:** Concepts, entities, attributes, essentials, and field access let you model genus/differentia and per-entity descriptors.
 - **Unification & backtracking:** Core Prolog-style search over Horn clauses enables inference chains for arguments.
-- **Semantic similarity (`=~=`):** Embedding-based fuzzy matching of strings/lists approximates measurement omission—treating close descriptors as equivalent when exact magnitudes are omitted.
-- **Dimensional similarity (`similar_attr/3`):** Per-attribute semantic comparison (e.g., color, material) scoped by a dimension, to compare descriptors without numeric metrics.
+- **Semantic similarity (`=~=`):** LLM-as-judge fuzzy matching of strings/lists implements measurement omission—treating close descriptors as equivalent when exact magnitudes are omitted.
+- **Dimensional similarity (`similar_attr/3`):** Per-attribute semantic comparison (e.g., color, material) scoped by a specific axis, using an LLM to judge similarity along that dimension.
 - **Logical control:** Cut, disjunction, negation-as-failure, if-then-else allow disciplined search control for structured argument evaluation.
 - **Collections:** `findall/3`, `setof/3` (dedup) to gather supporting facts/solutions for argument assembly.
 - **Type guards:** `is_atom/1`, `is_list/1`, `is_bound/1`, `is_unbound/1` to keep reasoning paths well-formed.
@@ -76,21 +76,55 @@ In Frisco:
 concept Triangle: description = "three-sided polygon", essentials = ["three_sides", "three_angles"], attributes = ["closed_shape", "plane_figure"].
 ```
 
-### Embedding Vectors: Computing Conceptual Similarity
+### LLM-as-Judge: Two Modes of Conceptual Comparison
 
-Human concepts are not rigid symbol-matching systems — we recognize that "canine" and "dog" refer to the same entity despite different words. Frisco bridges symbolic logic and perceptual cognition using **embedding vectors**:
+Human concepts are not rigid symbol-matching systems — we recognize that "canine" and "dog" refer to the same entity despite different words. Frisco bridges symbolic logic and perceptual cognition using an **LLM-as-judge** approach with two distinct operations:
 
-- **Semantic matching (`=~=`)**: Compares meaning, not just strings
-- **Cosine similarity**: Measures conceptual closeness in vector space
-- **Threshold-based matching**: Similarity ≥ 0.7 is considered a match
+#### 1. Conceptual Identity (`=~=`)
 
-This allows flexible reasoning:
+The `=~=` operator asks: **"Do these descriptions pick out the same concept or referent?"**
+
 ```frisco
-Man.attributes =~= "will eventually die"
-# Matches "finite lifespan" or "mortal being" without exact text
+"dog" =~= "canine"                    # True - same concept
+"philosopher" =~= "lover of wisdom"   # True - same concept
+"mortal" =~= "finite lifespan"        # True - same concept
+"dog" =~= "vehicle"                   # False - different concepts
 ```
 
-The `=~=` operator embodies the Objectivist insight that concepts integrate similar perceptual concretes — embeddings capture this integration mathematically.
+This is about **what something IS** — identifying whether two descriptions refer to the same abstract concept or concrete entity. The LLM judges conceptual identity, recognizing synonyms, paraphrases, and equivalent formulations.
+
+#### 2. Measurement Omission (`similar_attr/3`)
+
+The `similar_attr(Axis, A, B)` predicate asks: **"Do these concretes share this specific attribute, regardless of their measurements?"**
+
+```frisco
+similar_attr(color, "crimson", "scarlet")      # True - both are shades of red
+similar_attr(lifespan, "human", "mayfly")      # Low - very different durations
+similar_attr(material, "wooden chair", "oak table")  # True - both are wood
+```
+
+This is true **measurement omission** as described in Objectivist epistemology: concepts group concretes that share an attribute while differing in its specific measurement. The LLM evaluates similarity along a *specific dimension*, ignoring all other properties.
+
+#### The Objectivist Distinction
+
+From Rand's theory of concepts:
+- **Concept formation** involves recognizing that concretes share attributes while their measurements differ
+- **Conceptual identity** is about whether descriptions refer to the same abstraction
+
+Frisco separates these:
+- `=~=` handles **conceptual identity** — "Is this the same concept?"
+- `similar_attr/3` handles **measurement omission** — "Do these share this attribute?"
+
+#### How the LLM Scoring Works
+
+The LLM returns a similarity score from 0.0 to 1.0:
+- **1.0**: Same or nearly identical (identical concept, or same measurement on axis)
+- **0.7-0.9**: Clearly comparable, same general category/range
+- **0.4-0.6**: Related but significantly different
+- **0.1-0.3**: Weak or metaphorical connection
+- **0.0**: Unrelated (different concepts, or attribute not shared)
+
+A match succeeds when similarity ≥ 0.7 (configurable threshold).
 
 ---
 
@@ -100,7 +134,7 @@ The `=~=` operator embodies the Objectivist insight that concepts integrate simi
 Define abstract ideas with descriptions, attributes, and essentials — mirroring human conceptual hierarchies.
 
 ### 🔍 **Semantic Matching**
-The revolutionary `=~=` operator uses embedding vectors (via [FastEmbed](https://github.com/xenova/fastembed)) to match meaning, not syntax.
+The revolutionary `=~=` operator uses an LLM-as-judge to match meaning via measurement omission, not syntax.
 
 ### ⚡ **Logic Programming**
 Prolog-style rules and queries with unification, backtracking, and variable binding.
@@ -271,16 +305,16 @@ The `=~=` operator compares conceptual similarity:
          │
          ├─► Rule Database
          │
-         └─► Semantic Matcher (FastEmbed)
+         └─► Semantic Matcher (LLM-as-Judge)
                  │
-                 └─► Embedding Vectors → Cosine Similarity
+                 └─► localhost:9090 → Structured Output Similarity Score
 ```
 
 **Core Components:**
 - **Lexer** ([src/lexer.ts](src/lexer.ts)) - Tokenization
 - **Parser** ([src/parser.ts](src/parser.ts)) - AST construction
 - **Executor** ([src/executor.ts](src/executor.ts)) - Logic engine with unification and backtracking
-- **Semantic Matcher** ([src/semantic-matcher.ts](src/semantic-matcher.ts)) - Embedding-based similarity
+- **Semantic Matcher** ([src/semantic-matcher.ts](src/semantic-matcher.ts)) - LLM-as-judge similarity via measurement omission
 
 ---
 
@@ -427,11 +461,11 @@ is_thinking_being(x) :- x.concept =~= "rational being".
 
 Contributions welcome! Areas for improvement:
 
-- Additional embedding models
+- Alternative LLM backends for semantic matching
 - Performance optimizations
 - Standard library of philosophical concepts
 - IDE integration
-- REPL mode
+- Caching strategies for LLM judgments
 
 ---
 
@@ -446,7 +480,7 @@ MIT License - see [LICENSE](LICENSE) for details
 - **Gottfried Wilhelm Leibniz** - Vision of mechanical reasoning
 - **Ayn Rand** - Theory of concepts and Objectivist epistemology
 - **Alain Colmerauer & Robert Kowalski** - Prolog and logic programming
-- **Modern NLP Research** - Embedding vectors and semantic similarity
+- **Large Language Models** - Enabling semantic similarity judgment via measurement omission
 
 ---
 

@@ -94,8 +94,8 @@ export class SemanticMatcherWeb {
   }
 
   async match(left: string | string[], right: string): Promise<boolean> {
-    // For general semantic match without specific axis, use "semantic meaning" as axis
-    const axis = 'semantic meaning';
+    // For =~= operator: asks whether descriptions pick out the same concept/referent
+    const axis = 'conceptual identity';
 
     if (typeof left === 'string') {
       const similarity = await this.getSimilarityScore(axis, left, right);
@@ -114,13 +114,13 @@ export class SemanticMatcherWeb {
   }
 
   async getSimilarity(left: string, right: string): Promise<number> {
-    const similarity = await this.getSimilarityScore('semantic meaning', left, right);
+    const similarity = await this.getSimilarityScore('conceptual identity', left, right);
     console.log(`Similarity between "${left}" and "${right}": ${similarity.toFixed(4)}`);
     return similarity;
   }
 
   async matchWithThreshold(left: string | string[], right: string, dim?: string): Promise<boolean> {
-    const axis = dim || 'semantic meaning';
+    const axis = dim || 'conceptual identity';
 
     if (typeof left === 'string') {
       const similarity = await this.getSimilarityScore(axis, left, right);

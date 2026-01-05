@@ -4,7 +4,7 @@ Version 0.1.0
 
 ## Overview
 
-Frisco is a logic programming language combining Prolog-style inference with Objectivist epistemology and semantic matching via embedding vectors.
+Frisco is a logic programming language combining Prolog-style inference with Objectivist epistemology and semantic matching via an LLM-as-judge approach that implements measurement omission.
 
 ## Lexical Elements
 
@@ -15,7 +15,7 @@ Frisco is a logic programming language combining Prolog-style inference with Obj
 
 ### Operators
 - `=` - Assignment
-- `=~=` - Semantic match (embedding-based similarity ≥ 0.7)
+- `=~=` - Semantic match (LLM-judged similarity ≥ 0.7)
 - `:-` - Logical implication (rule definition)
 - `?` - Query operator
 - `.` - Field access / statement terminator
@@ -138,17 +138,59 @@ mortal(person) :-
 
 ## Semantic Matching
 
-The `=~=` operator compares strings using embedding vectors:
+Frisco provides two distinct semantic comparison operations, each serving a different epistemological purpose:
 
-- **String vs String**: Match if cosine similarity ≥ 0.7
+### Conceptual Identity (`=~=`)
+
+The `=~=` operator asks: **"Do these descriptions pick out the same concept or referent?"**
+
+- **String vs String**: Match if LLM-judged conceptual identity ≥ 0.7
 - **Array vs String**: Match if ANY element has similarity ≥ 0.7
 
 ```frisco
-"dog" =~= "canine"              # True
-"dog" =~= "mathematics"          # False
+"dog" =~= "canine"              # True - same concept
+"philosopher" =~= "lover of wisdom"  # True - same concept
+"dog" =~= "mathematics"          # False - different concepts
 ["cat", "dog"] =~= "puppy"      # True (dog ≈ puppy)
-["red", "blue"] =~= "vehicle"   # False
 ```
+
+This is about **what something IS** — identifying whether two descriptions refer to the same abstract concept or concrete entity.
+
+### Measurement Omission (`similar_attr/3`)
+
+The `similar_attr(Axis, A, B)` predicate asks: **"Do these concretes share this specific attribute, regardless of their measurements?"**
+
+```frisco
+similar_attr(color, "crimson", "scarlet")     # True - both are shades of red
+similar_attr(size, "elephant", "mouse")        # Low score - very different sizes
+similar_attr(material, "wooden chair", "oak table")  # True - both are wood
+similar_attr(lifespan, "human", "mayfly")      # Low - very different durations
+```
+
+This is true **measurement omission** as described in Objectivist epistemology: the LLM evaluates similarity along a *specific dimension*, ignoring all other properties.
+
+### The Objectivist Distinction
+
+From Rand's theory of concepts:
+- **Concept formation** involves recognizing that concretes share attributes while their measurements differ
+- **Conceptual identity** is about whether descriptions refer to the same abstraction
+
+Frisco separates these operations:
+- `=~=` handles **conceptual identity** — "Is this the same concept?"
+- `similar_attr/3` handles **measurement omission** — "Do these share this attribute?"
+
+### How the LLM Judge Works
+
+When evaluating semantic comparisons, the system calls an LLM at `localhost:9090` with a structured output request. The LLM acts as a judge that returns a similarity score.
+
+**Scoring:**
+- **1.0**: Same or nearly identical (identical concept, or same measurement on axis)
+- **0.7-0.9**: Clearly comparable, same general category/range
+- **0.4-0.6**: Related but significantly different
+- **0.1-0.3**: Weak or metaphorical connection
+- **0.0**: Unrelated (different concepts, or attribute not shared)
+
+A match succeeds when similarity ≥ 0.7 (configurable threshold).
 
 ## Field Access
 
@@ -352,17 +394,21 @@ Entities inherit concept properties and can add their own description.
 
 ## 4. Semantic Matching
 
-The `=~=` operator is Frisco's superpower:
+Frisco provides two semantic comparison operations:
+
+### Conceptual Identity (`=~=`)
+
+The `=~=` operator asks "Do these refer to the same concept?"
 
 ```frisco
-# Exact words not needed - meaning matters
-"dog" =~= "canine"           # True
-"happy" =~= "joyful"         # True
-"car" =~= "vehicle"          # True
-"tree" =~= "software"        # False
+# Exact words not needed - the LLM judges conceptual identity
+"dog" =~= "canine"           # True - same concept
+"happy" =~= "joyful"         # True - same concept
+"car" =~= "vehicle"          # True - same concept
+"tree" =~= "software"        # False - different concepts
 ```
 
-Arrays match if ANY element is similar:
+Arrays match if ANY element refers to the same concept:
 
 ```frisco
 concept Fruit.
@@ -371,6 +417,17 @@ concept Fruit.
 # This matches "banana" in the array
 Fruit.attributes =~= "tropical fruit"  # True
 ```
+
+### Measurement Omission (`similar_attr/3`)
+
+For comparing along a specific attribute dimension:
+
+```frisco
+similar_attr(color, "fire truck", "apple")   # True - both are red
+similar_attr(size, "elephant", "ant")         # Low - very different sizes
+```
+
+This is true measurement omission: comparing whether concretes share an attribute while ignoring their specific measurements.
 
 ## 5. Field Access
 

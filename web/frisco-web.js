@@ -1292,7 +1292,7 @@ Concrete 2: ${concrete2}`;
     }
   }
   async match(left, right) {
-    const axis = "semantic meaning";
+    const axis = "conceptual identity";
     if (typeof left === "string") {
       const similarity = await this.getSimilarityScore(axis, left, right);
       console.log(`Similarity between "${left}" and "${right}": ${similarity.toFixed(4)}`);
@@ -1309,12 +1309,12 @@ Concrete 2: ${concrete2}`;
     }
   }
   async getSimilarity(left, right) {
-    const similarity = await this.getSimilarityScore("semantic meaning", left, right);
+    const similarity = await this.getSimilarityScore("conceptual identity", left, right);
     console.log(`Similarity between "${left}" and "${right}": ${similarity.toFixed(4)}`);
     return similarity;
   }
   async matchWithThreshold(left, right, dim) {
-    const axis = dim || "semantic meaning";
+    const axis = dim || "conceptual identity";
     if (typeof left === "string") {
       const similarity = await this.getSimilarityScore(axis, left, right);
       console.log(`Similarity for "${axis}" between "${left}" and "${right}": ${similarity.toFixed(4)}`);

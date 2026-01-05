@@ -2,11 +2,11 @@
 
 ## Executive Summary
 
-Frisco is currently a **semantic knowledge base query system** with fuzzy matching capabilities, rather than a full logic programming language. It implements approximately 15-20% of Prolog's capabilities. While it has a unique and innovative semantic matching feature using embeddings, it lacks most core Prolog features including proper unification, backtracking, lists, arithmetic, and compound terms.
+Frisco is currently a **semantic knowledge base query system** with fuzzy matching capabilities, rather than a full logic programming language. It implements approximately 15-20% of Prolog's capabilities. While it has a unique and innovative semantic matching feature using an LLM-as-judge for measurement omission, it lacks most core Prolog features including proper unification, backtracking, lists, arithmetic, and compound terms.
 
 **Current State:**
 - ✅ Concept/entity ontology with hierarchies
-- ✅ Semantic matching via embeddings (=~=)
+- ✅ Semantic matching via LLM-as-judge (=~=)
 - ✅ Simple rules with single-solution evaluation
 - ✅ Basic I/O predicates
 - ✅ Variable assignments
@@ -331,9 +331,10 @@ abs(X, Result) :- (X >= 0 -> Result = X ; Result is -X).
 ### 1. Semantic Matching (KEEP AND ENHANCE)
 
 **Current Implementation:**
-- =~= operator with embedding vectors
-- 0.7 threshold cosine similarity
-- BGE-Small-EN-V1.5 model
+- =~= operator with LLM-as-judge via localhost:9090
+- 0.7 threshold similarity score
+- Structured output with JSON schema `{"similarity": <number>}`
+- Implements measurement omission: judges whether two concretes share an attribute
 
 **Recommendations:**
 - Keep as Frisco's distinguishing feature
@@ -341,6 +342,7 @@ abs(X, Result) :- (X >= 0 -> Result = X ; Result is -X).
 - Make threshold configurable per query
 - Add `similar(X, Y, Threshold)` predicate for explicit control
 - Consider adding semantic distance predicate: `semantic_distance(X, Y, Distance)`
+- Add caching for repeated similarity judgments
 
 **Example:**
 ```frisco
@@ -434,7 +436,7 @@ False  # Only 0.75 similar
 - `src/lexer.ts` - Add new tokens (numbers, operators, brackets)
 
 ### Semantic Features (Preserve)
-- `src/semantic-matcher.ts` - Keep as-is, integrate with unification
+- `src/semantic-matcher.ts` - LLM-as-judge implementation, integrate with unification
 
 ### Built-ins
 - Create `src/builtins.ts` - Centralize all built-in predicates
