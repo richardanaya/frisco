@@ -209,6 +209,165 @@ This implements the Objectivist definition structure: **genus + differentia**. A
 
 ---
 
+## 🤖 How is this Useful for AI?
+
+Large language models can generate fluent arguments, but they can't *verify* their own reasoning. Frisco changes that: an AI can construct arguments as executable logical structures, then **compute whether they're valid**.
+
+### The Problem: Unverifiable Reasoning
+
+When an LLM argues "Socrates is mortal because he's human, and humans are mortal," it's pattern-matching on training data. It can't:
+- Check if "human" is a valid concept (what are its essentials?)
+- Verify that Socrates actually falls under "human"
+- Confirm that "mortal" follows from the premises
+
+The reasoning *looks* right, but there's no computation backing it.
+
+### The Solution: Executable Arguments
+
+With Frisco, an AI can express the *same* argument as computable logic:
+
+```frisco
+# Define concepts with explicit structure
+concept Human:
+  description = "rational animal",
+  essentials = [rationality, animality].
+
+concept Mortal:
+  description = "subject to death",
+  essentials = [finite_lifespan].
+
+entity SOCRATES: Human,
+  description = "ancient Greek philosopher".
+
+# The argument as a verifiable rule
+mortal(X) :-
+  X.concept = Human,                           # X is human
+  share_attr(finite_lifespan, "human", "living thing"),  # humans share mortality with living things
+  has_attr(finite_lifespan, X.description).    # X has finite lifespan
+
+# Execute the argument
+? mortal(SOCRATES).
+# TRUE - with explicit reasoning chain
+```
+
+Now the argument **runs**. If any step fails, we know exactly where.
+
+### Validating Conceptual Groupings
+
+An AI might claim: "A corporation is like a person, so it has rights."
+
+Frisco can check if this conceptual grouping is valid:
+
+```frisco
+# Can we group corporations with persons by "consciousness"?
+? share_attr(consciousness, "corporation", "human person").
+# FALSE - corporations lack consciousness
+
+# Can we group them by "legal standing"?
+? share_attr(legal_standing, "corporation", "human person").
+# TRUE - both have legal standing
+
+# The AI's argument is valid ONLY for legal-standing-based reasoning
+# Not for consciousness-based reasoning (like suffering, dignity, etc.)
+```
+
+The AI can now say: "Corporations and persons can be grouped for *legal* purposes, but NOT for *moral* purposes that depend on consciousness."
+
+### Building and Checking Definitions
+
+An AI constructing an argument needs valid definitions. Frisco can verify them:
+
+```frisco
+# AI claims: "A lie is a statement intended to deceive"
+# Let's verify this definition structure:
+
+? differentia("lie", "statements", X).
+# X = "intent to deceive" ✓
+
+# Now check: does this definition correctly exclude non-lies?
+? has_attr(intent_to_deceive, "honest mistake").
+# FALSE ✓ - honest mistakes aren't lies (no intent)
+
+? has_attr(intent_to_deceive, "fiction writing").
+# FALSE ✓ - fiction isn't lying (no deception intent, audience knows)
+
+? has_attr(intent_to_deceive, "deliberate falsehood to mislead").
+# TRUE ✓ - this IS a lie
+```
+
+The AI has now *computed* that its definition is valid — it correctly includes lies and excludes non-lies.
+
+### Transparent Reasoning Chains
+
+When an AI uses Frisco, its reasoning becomes auditable:
+
+```frisco
+# AI's argument: "This policy is unjust"
+unjust_policy(P) :-
+  println("Checking if policy violates rights..."),
+  has_attr(rights_violation, P.description),
+  println("  ✓ Policy violates rights"),
+
+  println("Checking if violation is initiated by force..."),
+  share_attr(initiated_force, P.description, "coercion"),
+  println("  ✓ Policy uses initiated force"),
+
+  println("Checking against justice definition..."),
+  differentia("justice", "social concepts", Diff),
+  println("  Justice requires:", Diff),
+  not(has_attr(Diff, P.description)),
+  println("  ✗ Policy lacks this quality"),
+
+  println("Conclusion: Policy is unjust").
+
+? unjust_policy(PROPOSED_TAX).
+```
+
+Every step is explicit. If the argument fails, we see exactly *which* premise failed and *why*.
+
+### The AI Advantage
+
+| Without Frisco | With Frisco |
+|----------------|-------------|
+| "Trust me, this follows" | Explicit logical chain |
+| Black-box reasoning | Auditable steps |
+| Can't verify own arguments | Computes validity |
+| Conceptual errors hidden | Invalid groupings caught |
+| Definitions assumed | Definitions verified |
+
+An AI using Frisco doesn't just *assert* that its reasoning is valid — it **proves** it by running the argument as a computation.
+
+### Example: AI Self-Checking an Argument
+
+```frisco
+# AI wants to argue: "Taxation is theft"
+# First, let's see if this conceptual equation holds
+
+# What is the differentia of theft?
+? differentia("theft", "property transfers", TheftDiff).
+# TheftDiff = "without consent" or "by force"
+
+# Does taxation share this characteristic?
+? share_attr(without_owner_consent, "taxation", "theft").
+# TRUE - both involve non-consensual taking
+
+? share_attr(taking_of_property, "taxation", "theft").
+# TRUE - both involve property transfer
+
+# But wait - are there relevant differences?
+? share_attr(legal_authorization, "taxation", "theft").
+# FALSE - theft lacks legal authorization, taxation has it
+
+# AI conclusion: "Taxation shares SOME characteristics with theft
+# (non-consensual taking) but differs in others (legal authorization).
+# The argument 'taxation is theft' is valid IFF legal authorization
+# is not considered morally relevant to the definition of theft."
+```
+
+The AI has now *computed* the structure of its own argument, identified where it's strong (shared characteristics), and where it's contestable (differing characteristics). This is **verifiable reasoning**.
+
+---
+
 ## ✨ Key Features
 
 ### 🧠 **Concept-Based Ontology**
